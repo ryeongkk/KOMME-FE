@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Color System (Figma node 142:2027) */
+  --color-gray-50: #f9f9fd;
+  --color-gray-100: #f0f1f4;
+  --color-gray-200: #e2e6ea;
+  --color-gray-300: #bfc5d0;
+  --color-gray-400: #9fa7b7;
+  --color-gray-500: #576071;
+  --color-gray-600: #363c4b;
+  --color-gray-700: #252a36;
+  --color-gray-800: #21252f;
+  --color-gray-900: #1a1e22;
+
+  --color-black: #080808;
+
+  --color-primary: #21252f;
+
+  --color-secondary-100: #e9fdff;
+  --color-secondary-200: #8cfcff;
+  --color-secondary-300: #11dde4;
+  --color-secondary-400: #17bcc0;
+
+  --color-negative: #fd344d;
+
+  --font-sans: var(--font-raleway), sans-serif;
+
+  /* Figma text styles (전체 11개, 줄간격 150% = 1.5, 자간 = -2% of size) */
+  --text-title-b-20: 20px;
+  --text-title-b-20--line-height: 1.5;
+  --text-title-b-20--letter-spacing: -0.4px;
+  --text-title-b-20--font-weight: 700;
+
+  --text-heading-b-18: 18px;
+  --text-heading-b-18--line-height: 1.5;
+  --text-heading-b-18--letter-spacing: -0.36px;
+  --text-heading-b-18--font-weight: 600;
+
+  --text-body-sb-16: 16px;
+  --text-body-sb-16--line-height: 1.5;
+  --text-body-sb-16--letter-spacing: -0.32px;
+  --text-body-sb-16--font-weight: 600;
+
+  --text-body-m-16: 16px;
+  --text-body-m-16--line-height: 1.5;
+  --text-body-m-16--letter-spacing: -0.32px;
+  --text-body-m-16--font-weight: 500;
+
+  --text-body-sb-14: 14px;
+  --text-body-sb-14--line-height: 1.5;
+  --text-body-sb-14--letter-spacing: -0.28px;
+  --text-body-sb-14--font-weight: 600;
+
+  --text-body-m-14: 14px;
+  --text-body-m-14--line-height: 1.5;
+  --text-body-m-14--letter-spacing: -0.28px;
+  --text-body-m-14--font-weight: 500;
+
+  --text-caption-sb-12: 12px;
+  --text-caption-sb-12--line-height: 1.5;
+  --text-caption-sb-12--letter-spacing: -0.24px;
+  --text-caption-sb-12--font-weight: 600;
+
+  --text-caption-m-12: 12px;
+  --text-caption-m-12--line-height: 1.5;
+  --text-caption-m-12--letter-spacing: -0.24px;
+  --text-caption-m-12--font-weight: 500;
+
+  --text-caption-r-12: 12px;
+  --text-caption-r-12--line-height: 1.5;
+  --text-caption-r-12--letter-spacing: -0.24px;
+  --text-caption-r-12--font-weight: 400;
+
+  --text-caption-m-10: 10px;
+  --text-caption-m-10--line-height: 1.5;
+  --text-caption-m-10--letter-spacing: -0.2px;
+  --text-caption-m-10--font-weight: 500;
+
+  --text-caption-r-10: 10px;
+  --text-caption-r-10--line-height: 1.5;
+  --text-caption-r-10--letter-spacing: -0.2px;
+  --text-caption-r-10--font-weight: 400;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
