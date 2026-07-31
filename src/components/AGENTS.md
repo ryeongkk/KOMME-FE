@@ -12,7 +12,7 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 | 디렉토리 | 설명 |
 |-----------|---------|
 | `ui/` | 특정 기능에 속하지 않는 범용 재사용 프리미티브 (예: `bottom-sheet.tsx`) |
-| `login/` | 로그인 화면 전용 컴포넌트 (`login-screen.tsx`) |
+| `login/` | 로그인 플로우 화면 전용 컴포넌트 (`login-screen.tsx` = `/login`, `terms-screen.tsx` = `/login/terms`) |
 
 ## 주요 파일
 
