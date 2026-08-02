@@ -11,7 +11,7 @@ Next.js App Router 루트입니다: 라우트, 루트 레이아웃, 전역 스�
 
 | 파일              | 설명                                                                                                                                                                                                                               |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `layout.tsx`      | 루트 레이아웃. `next/font/google`로 Raleway를 불러오고, PWA `metadata`/`viewport`를 설정하며, `RegisterServiceWorker`를 마운트함                                                                                                   |
+| `layout.tsx`      | 루트 레이아웃. `next/font/google`로 Raleway를 불러오고, PWA `metadata`/`viewport`를 설정하며, `RegisterServiceWorker`를 마운트함. `children`을 `max-w-sm` 중앙 정렬 컨테이너로 감싸서 데스크톱 너비에서도 항상 모바일 폭으로 렌더링되고 양옆은 흰 여백임 |
 | `page.tsx`        | 홈 라우트(`/`) — **"KOMME" 한 줄짜리 플레이스홀더**. 스타터 내용은 걷어냈고 실제 제품 UI는 아직 없음                                                                                                                               |
 | `globals.css`     | Tailwind v4 테마: 색상 토큰(gray 50~900, `primary`, `secondary` 100~400, `negative`)과 11개 타이포그래피 토큰(`text-title-b-20`, `text-body-sb-16` 등). Figma 파일 `mGriQB29mZ6VpIDQDpo5F6`(Color System 노드 `142:2027`)에서 추출 |
 | `manifest.ts`     | PWA 매니페스트 — 이름, 아이콘, 테마 색상. `<html lang>`은 `en`인데 카피는 여전히 한국어임                                                                                                                                          |

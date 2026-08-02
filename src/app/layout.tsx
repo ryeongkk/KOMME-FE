@@ -35,8 +35,10 @@ export default function RootLayout({
       lang="en"
       className={`${raleway.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        {children}
+      <body className="min-h-screen bg-white">
+        <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col bg-white">
+          {children}
+        </div>
         <RegisterServiceWorker />
       </body>
     </html>
