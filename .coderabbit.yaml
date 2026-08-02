@@ -1,0 +1,16 @@
+language: "ko-KR"
+reviews:
+  profile: "chill"
+  auto_review:
+    enabled: true
+  path_instructions:
+    - path: "src/app/globals.css"
+      instructions: >
+        디자인 토큰(색상, 타이포그래피)은 Figma에서 추출한 값입니다. 임의로
+        지어낸 색상/수치로 보이면 지적해 주세요.
+    - path: "**/*.tsx"
+      instructions: >
+        Tailwind v4 CSS-first 설정을 사용합니다. tailwind.config.js 기반 문법
+        제안은 하지 마세요.
+chat:
+  auto_reply: true
