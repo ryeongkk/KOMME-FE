@@ -11,7 +11,7 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 
 | 디렉토리 | 설명 |
 |-----------|---------|
-| `ui/` | 특정 기능에 속하지 않는 범용 재사용 프리미티브 (예: `bottom-sheet.tsx`) |
+| `ui/` | 특정 기능에 속하지 않는 범용 재사용 프리미티브 (예: `bottom-sheet.tsx`, `text-field.tsx`) |
 | `login/` | 로그인 플로우 화면 전용 컴포넌트 (`login-screen.tsx` = `/login`, `terms-screen.tsx` = `/login/terms`, `nickname-screen.tsx` = `/login/nickname`) |
 
 ## 주요 파일
@@ -25,6 +25,7 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 ### 이 디렉토리에서 작업할 때
 - 새 화면(라우트)이 생기면 그 화면 전용 컴포넌트는 `login/`처럼 화면 이름을 딴 하위 폴더에 넣으세요. 여러 화면에서 재사용되는 범용 UI 프리미티브(바텀시트, 모달, 버튼 등)만 `ui/`에 넣습니다. 어느 한 화면에서만 쓰는 컴포넌트를 `ui/`에 넣지 마세요 — 두 번째 사용처가 생길 때 옮기세요.
 - `nickname-screen.tsx`의 닉네임 중복 확인은 아직 백엔드 API가 없어 예약어 배열(`RESERVED_NICKNAMES`)로 흉내만 낸 상태입니다 — 실제 중복 확인 엔드포인트가 생기면 그걸로 교체하세요.
+- `ui/text-field.tsx`는 `email-screen.tsx`/`nickname-screen.tsx`가 공유하는 인풋 껍데기(label + 인풋 + clear 버튼 + 캡션)입니다. 값 상태, 검증 로직(정규식, blur 타이밍), 중복 확인처럼 화면마다 다른 것은 각 화면 컴포넌트에 남깁니다. 캡션 한 줄은 `error`(문자열)가 있으면 빨간 테두리+빨간 캡션으로, 없고 `helperText`만 있으면 회색 상시 힌트로 보여줍니다 — 이메일 화면처럼 상시 힌트가 필요 없으면 `helperText`를 안 주면 됩니다.
 - `icons.tsx`는 화면에 속하지 않는 전역 공유 자산이라 하위 폴더로 옮기지 않고 루트에 유지합니다.
 
 ### 아이콘 다루기

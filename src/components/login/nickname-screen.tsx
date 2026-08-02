@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeftIcon, CloseIcon, WarningIcon } from "@/components/icons";
+import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
+import { TextField } from "@/components/ui/text-field";
 
 const NICKNAME_PATTERN = /^[a-zA-Z0-9]{2,20}$/;
 // ponytail: reserved-word check is a client-side stand-in for the real duplicate-check API,
@@ -13,11 +14,12 @@ const TOAST_DURATION_MS = 2500;
 export function NicknameScreen() {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
+  const [touched, setTouched] = useState(false);
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   const isValidFormat = NICKNAME_PATTERN.test(nickname);
-  const hasFormatError = nickname.length > 0 && !isValidFormat;
+  const hasFormatError = touched && ((nickname.length > 0 && !isValidFormat) || isDuplicate);
   const canStart = isValidFormat && !isDuplicate;
 
   useEffect(() => {
@@ -51,37 +53,17 @@ export function NicknameScreen() {
         <div className="size-6" aria-hidden />
       </div>
 
-      <div className="mt-4 flex w-full flex-col gap-4">
-        <p className="text-heading-b-18 text-black">Enter your nickname</p>
-
-        <div className="flex w-full flex-col gap-1">
-          <div
-            className={`flex h-12 w-full items-center gap-2.5 rounded-lg border bg-white p-4 ${
-              hasFormatError || isDuplicate ? "border-negative" : "border-gray-200"
-            }`}
-          >
-            <input
-              type="text"
-              value={nickname}
-              onChange={(event) => handleChange(event.target.value)}
-              placeholder="Enter your nickname"
-              className="flex-1 text-body-m-14 text-gray-900 placeholder-gray-400 outline-none"
-            />
-            {nickname.length > 0 && (
-              <button
-                type="button"
-                aria-label="Clear nickname"
-                onClick={() => handleChange("")}
-                className="shrink-0 text-gray-400"
-              >
-                <CloseIcon className="size-4" />
-              </button>
-            )}
-          </div>
-          <p className={`text-caption-r-12 ${hasFormatError || isDuplicate ? "text-negative" : "text-gray-500"}`}>
-            Please use 2–20 characters, letters and numbers only.
-          </p>
-        </div>
+      <div className="mt-4 w-full">
+        <TextField
+          name="nickname"
+          label="Enter your nickname"
+          placeholder="Enter your nickname"
+          value={nickname}
+          onChange={handleChange}
+          onBlur={() => setTouched(true)}
+          error={hasFormatError ? "Please use 2–20 characters, letters and numbers only." : undefined}
+          helperText="Please use 2–20 characters, letters and numbers only."
+        />
       </div>
 
       <div className="relative mt-auto w-full">
