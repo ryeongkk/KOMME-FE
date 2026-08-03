@@ -77,7 +77,7 @@ export function CodeScreen() {
       setShowToast(true);
       return;
     }
-    // TODO: navigate to the password setting screen once that route exists
+    router.push("/login/password");
   };
 
   return (

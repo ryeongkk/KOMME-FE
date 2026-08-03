@@ -75,6 +75,7 @@ export function TermsScreen() {
       <button
         type="button"
         disabled={!allChecked}
+        onClick={() => router.push("/login/email")}
         className={`mt-auto flex h-[52px] w-full items-center justify-center rounded-lg text-body-m-14 ${
           allChecked ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
         }`}

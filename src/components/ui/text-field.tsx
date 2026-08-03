@@ -1,6 +1,7 @@
 "use client";
 
-import { CloseIcon } from "@/components/icons";
+import { useState } from "react";
+import { CloseIcon, EyeIcon, EyeOffIcon } from "@/components/icons";
 
 type TextFieldProps = {
   name: string;
@@ -12,6 +13,9 @@ type TextFieldProps = {
   helperText?: string;
   placeholder?: string;
   type?: "text" | "email" | "password";
+  maxLength?: number;
+  /** "heading" (default) renders label as the screen's own heading (email/nickname screens, one field each). "field" renders a smaller per-field label for screens with multiple labeled fields (e.g. password + confirm password). */
+  labelVariant?: "heading" | "field";
 };
 
 export function TextField({
@@ -24,10 +28,18 @@ export function TextField({
   helperText,
   placeholder,
   type = "text",
+  labelVariant = "heading",
+  maxLength,
 }: TextFieldProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+  const inputType = isPassword ? (showPassword ? "text" : "password") : type;
+
   return (
-    <div className="flex w-full flex-col gap-4">
-      <p className="text-heading-b-18 text-black">{label}</p>
+    <div className={`flex w-full flex-col ${labelVariant === "field" ? "gap-1" : "gap-4"}`}>
+      <p className={labelVariant === "field" ? "text-body-sb-14 text-gray-500" : "text-heading-b-18 text-black"}>
+        {label}
+      </p>
 
       <div className="flex w-full flex-col gap-1">
         <div
@@ -36,23 +48,34 @@ export function TextField({
           }`}
         >
           <input
-            type={type}
+            type={inputType}
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onBlur={onBlur}
             placeholder={placeholder}
+            maxLength={maxLength}
             className="flex-1 text-body-m-14 text-gray-900 placeholder-gray-400 outline-none"
           />
-          {value.length > 0 && (
-            <button
-              type="button"
-              aria-label={`Clear ${name}`}
-              onClick={() => onChange("")}
-              className="shrink-0 text-gray-400"
-            >
-              <CloseIcon className="size-4" />
-            </button>
-          )}
+          {value.length > 0 &&
+            (isPassword ? (
+              <button
+                type="button"
+                aria-label={showPassword ? `Hide ${name}` : `Show ${name}`}
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="shrink-0 text-gray-400"
+              >
+                {showPassword ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label={`Clear ${name}`}
+                onClick={() => onChange("")}
+                className="shrink-0 text-gray-400"
+              >
+                <CloseIcon className="size-4" />
+              </button>
+            ))}
         </div>
         {(error ?? helperText) && (
           <p className={`text-caption-r-12 ${error ? "text-negative" : "text-gray-500"}`}>{error ?? helperText}</p>

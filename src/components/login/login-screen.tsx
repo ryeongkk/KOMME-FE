@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { AppleIcon, CheckIcon, GlobeIcon, GoogleIcon } from "@/components/icons";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 
@@ -8,6 +11,8 @@ const languages = [
 ];
 
 export function LoginScreen() {
+  const router = useRouter();
+
   return (
     <>
       <p className="mt-[150.5px] text-title-b-20 text-black">Logo</p>
@@ -36,7 +41,9 @@ export function LoginScreen() {
         </div>
 
         <div className="flex items-center justify-center gap-5 text-body-m-14 text-black">
-          <button type="button">Sign Up</button>
+          <button type="button" onClick={() => router.push("/login/terms")}>
+            Sign Up
+          </button>
           <span aria-hidden>|</span>
           <button type="button">Reset Password</button>
         </div>

@@ -25,7 +25,7 @@ Next.js App Router 루트입니다: 라우트, 루트 레이아웃, 전역 스�
 | --------------- | ---------------------------------------------------------------------------------------------------- |
 | `icon-192.png/` | 동적 PNG 아이콘 라우트 — `next/og`를 쓰는 `route.tsx`의 `GET` 핸들러 (`icon-192.png/AGENTS.md` 참고) |
 | `icon-512.png/` | 512×512 버전, 패턴은 동일 (`icon-512.png/AGENTS.md` 참고)                                            |
-| `login/`        | 로그인 플로우 라우트 — `/login`, `/login/terms`, `/login/email`, `/login/code`, `/login/nickname`. 화면 컴포넌트는 `src/components/login/`에 있고 각 `page.tsx`는 그걸 렌더링만 함 (`components/AGENTS.md` 참고) |
+| `login/`        | 로그인 플로우 라우트 — `/login`, `/login/terms`, `/login/email`, `/login/code`, `/login/password`, `/login/nickname`. 화면 컴포넌트는 `src/components/login/`에 있고 각 `page.tsx`는 그걸 렌더링만 함 (`components/AGENTS.md` 참고) |
 
 ## AI 에이전트를 위한 안내
 
