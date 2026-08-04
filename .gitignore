@@ -42,6 +42,9 @@ yarn-error.log*
 # non-code reference docs
 docs/*.pdf
 
+# local blog draft writeups (see decision-log skill)
+/blog-drafts/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
