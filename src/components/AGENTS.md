@@ -13,7 +13,7 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 |-----------|---------|
 | `ui/` | 특정 기능에 속하지 않는 범용 재사용 프리미티브 (예: `bottom-sheet.tsx`, `text-field.tsx`) |
 | `login/` | 로그인 플로우 화면 전용 컴포넌트 (`login-screen.tsx` = `/login`, `terms-screen.tsx` = `/login/terms`, `email-screen.tsx` = `/login/email`, `code-screen.tsx` = `/login/code`, `password-screen.tsx` = `/login/password`, `nickname-screen.tsx` = `/login/nickname`) |
-| `my/` | 마이페이지 플로우 화면 전용 컴포넌트 (`my-screen.tsx` = `/my`, `my-account-screen.tsx` = `/my/account`, `edit-profile-screen.tsx` = `/my/account/edit`(닉네임 변경), `language-setting-screen.tsx` = `/my/language`, `terms-policy-list-screen.tsx` = `/my/terms`, `terms-policy-detail-screen.tsx` = `/my/terms/service`·`/my/terms/privacy`·`/my/terms/location` 3개 라우트가 공유하는 헤더 전용 컴포넌트) |
+| `my/` | 마이페이지 플로우 화면 전용 컴포넌트 (`my-screen.tsx` = `/my`, `my-account-screen.tsx` = `/my/account`(로그아웃 확인 다이얼로그 포함), `edit-profile-screen.tsx` = `/my/account/edit`(닉네임 변경), `language-setting-screen.tsx` = `/my/language`, `terms-policy-list-screen.tsx` = `/my/terms`, `terms-policy-detail-screen.tsx` = `/my/terms/service`·`/my/terms/privacy`·`/my/terms/location` 3개 라우트가 공유하는 헤더 전용 컴포넌트) |
 
 ## 주요 파일
 
@@ -34,6 +34,7 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 - 언어 설정 UI는 화면마다 다릅니다: `login-screen.tsx`는 바텀시트(`ui/bottom-sheet.tsx` 위에 언어 목록을 인라인으로 렌더링, `popoverTarget`으로 트리거)로, `my/language-setting-screen.tsx`(`/my/language`)는 전용 페이지로 엽니다 — Figma에서 두 화면이 실제로 다르게 디자인되어 있어 공용 컴포넌트로 묶지 않았습니다. 둘 다 언어 목록이 정적 배열이라 실제로 언어를 바꾸는 로직은 없습니다(현재 영어 버전만 서비스).
 - `language-setting-screen.tsx`의 `CURRENT_LANGUAGE`는 실제 i18n이 없어서 "영어가 활성 언어"라고 흉내만 낸 상수입니다 — 다른 언어를 고르면 Confirm 버튼이 활성화되지만 눌러도 `/my`로 돌아갈 뿐 실제로 언어가 바뀌지는 않습니다. 실제 i18n 라우팅이 생기면 이 상수와 Confirm 버튼의 `onClick`을 교체하세요.
 - `my-screen.tsx`의 하단 탭바(`Tapbar`)는 아직 이 화면에서만 쓰여서 별도 파일로 빼지 않고 `my-screen.tsx` 안에 로컬 컴포넌트로 둡니다. Home/Course 라우트가 생겨 다른 화면에서도 필요해지면 그때 `ui/`로 옮기세요. Course 탭은 아직 라우트가 없어 클릭해도 아무 일도 일어나지 않습니다 — `/course`가 생기면 연결하세요.
+- `my-account-screen.tsx`의 "Log Out"은 바로 이동하지 않고 `ui/bottom-sheet.tsx`와 같은 네이티브 popover API(`popoverTarget`/`popover="auto"`)로 화면 중앙 확인 다이얼로그(`#logout-dialog`, Figma 노드 `392:14406`)를 띄웁니다. 지금은 이 화면에서만 쓰여서 로컬로 인라인했습니다 — 다른 화면에서도 로그아웃 확인이 필요해지면 그때 `ui/`로 옮기세요. "Log out" 확정 시 실제 세션 정리 없이 `/login`으로 이동합니다.
 - `edit-profile-screen.tsx`(`/my/account/edit`, 닉네임 변경)는 `login/nickname-screen.tsx`와 검증 정규식·예약어 스텁·토스트 애니메이션 패턴을 그대로 재사용하지만, Figma 스펙(노드 `345:5075`)상 캡션 문구가 다릅니다: 형식 오류든 중복 닉네임이든 필드 아래 캡션은 항상 "Please use 2–20 characters..." 힌트 문구를 빨간색으로만 보여주고, "This nickname is already in use." 문구는 캡션이 아니라 하단 토스트에만 나타납니다 — `nickname-screen.tsx`처럼 `error` prop에 서로 다른 메시지를 넣지 마세요.
 
 ### 아이콘 다루기
