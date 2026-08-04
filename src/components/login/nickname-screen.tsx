@@ -76,7 +76,7 @@ export function NicknameScreen() {
         {isDuplicate && (
           <div
             role="alert"
-            className={`absolute bottom-full left-1/2 mb-5 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-xl bg-gray-700 px-4 py-3 transition-all duration-300 ${
+            className={`absolute bottom-full left-1/2 mb-5 flex w-[301px] -translate-x-1/2 items-center gap-2 rounded-xl bg-gray-700 px-4 py-3 transition-all duration-300 ${
               showToast ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
             }`}
           >
