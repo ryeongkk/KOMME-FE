@@ -43,7 +43,7 @@ export function LanguageSettingScreen() {
         <button
           type="button"
           disabled={!canConfirm}
-          onClick={() => router.push("/mypage")}
+          onClick={() => router.push("/my")}
           className={`flex h-[53px] w-full items-center justify-center rounded-lg text-body-m-14 ${
             canConfirm ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
           }`}

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ArrowRightIcon, HomeIcon, MapIcon, MypageIcon } from "@/components/icons";
 
-export function MypageScreen() {
+export function MyScreen() {
   const router = useRouter();
 
   return (
@@ -17,7 +17,7 @@ export function MypageScreen() {
       <div className="flex flex-1 flex-col gap-3 pb-3">
         <button
           type="button"
-          onClick={() => router.push("/mypage/account")}
+          onClick={() => router.push("/my/account")}
           className="flex w-full items-center gap-[13px] p-4"
         >
           <span className="flex size-[52px] shrink-0 items-center justify-center rounded-full border border-gray-100 bg-gray-50 p-2.5">
@@ -31,7 +31,7 @@ export function MypageScreen() {
           <p className="px-4 text-caption-sb-12 text-gray-500">General</p>
           <button
             type="button"
-            onClick={() => router.push("/mypage/language")}
+            onClick={() => router.push("/my/language")}
             className="w-full p-4 text-left text-body-m-14 text-black"
           >
             Language Setting

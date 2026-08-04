@@ -1,4 +1,4 @@
-import { MyAccountScreen } from "@/components/mypage/my-account-screen";
+import { MyAccountScreen } from "@/components/my/my-account-screen";
 
 export default function MyAccountPage() {
   return (

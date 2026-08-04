@@ -26,7 +26,7 @@ Next.js App Router 루트입니다: 라우트, 루트 레이아웃, 전역 스�
 | `icon-192.png/` | 동적 PNG 아이콘 라우트 — `next/og`를 쓰는 `route.tsx`의 `GET` 핸들러 (`icon-192.png/AGENTS.md` 참고) |
 | `icon-512.png/` | 512×512 버전, 패턴은 동일 (`icon-512.png/AGENTS.md` 참고)                                            |
 | `login/`        | 로그인 플로우 라우트 — `/login`, `/login/terms`, `/login/email`, `/login/code`, `/login/password`, `/login/nickname`, `/login/reset/email`, `/login/reset/code`, `/login/reset/password`. 화면 컴포넌트는 `src/components/login/`에 있고 각 `page.tsx`는 그걸 렌더링만 함 — `reset/` 쪽 3개는 회원가입과 같은 화면 컴포넌트를 다른 문구/다음 라우트 prop으로 재사용함 (`components/AGENTS.md` 참고) |
-| `mypage/`       | 마이페이지 라우트 — `/mypage`(하단 탭바 포함, 프로필 행 클릭 시 `/mypage/account`로, Language Setting 행 클릭 시 `/mypage/language`로 이동), `/mypage/account`(프로필 편집/로그아웃/계정 삭제), `/mypage/language`(언어 선택 — 로그인 화면의 바텀시트와 달리 전용 페이지). 화면 컴포넌트는 `src/components/mypage/`에 있고 각 `page.tsx`는 그걸 렌더링만 함. 하단 탭바(`Tapbar`)는 `mypage-screen.tsx` 안에 로컬 컴포넌트로만 있음 — Home/Course 라우트가 생겨 두 번째 사용처가 필요해지면 `components/ui/`로 옮길 것 |
+| `my/`           | 마이페이지 라우트 — `/my`(하단 탭바 포함, 프로필 행 클릭 시 `/my/account`로, Language Setting 행 클릭 시 `/my/language`로 이동), `/my/account`(프로필 편집/로그아웃/계정 삭제), `/my/language`(언어 선택 — 로그인 화면의 바텀시트와 달리 전용 페이지). 화면 컴포넌트는 `src/components/my/`에 있고 각 `page.tsx`는 그걸 렌더링만 함. 하단 탭바(`Tapbar`)는 `my-screen.tsx` 안에 로컬 컴포넌트로만 있음 — Home/Course 라우트가 생겨 두 번째 사용처가 필요해지면 `components/ui/`로 옮길 것 |
 
 ## AI 에이전트를 위한 안내
 

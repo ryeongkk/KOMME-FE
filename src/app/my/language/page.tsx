@@ -1,4 +1,4 @@
-import { LanguageSettingScreen } from "@/components/mypage/language-setting-screen";
+import { LanguageSettingScreen } from "@/components/my/language-setting-screen";
 
 export default function LanguageSettingPage() {
   return (
