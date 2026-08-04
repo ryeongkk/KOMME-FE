@@ -41,8 +41,11 @@ export function MyScreen() {
 
         <div className="flex w-full flex-col">
           <p className="px-4 text-caption-sb-12 text-gray-500">About</p>
-          {/* TODO: navigate to the terms & policies route once it exists */}
-          <button type="button" className="w-full p-4 text-left text-body-m-14 text-black">
+          <button
+            type="button"
+            onClick={() => router.push("/my/terms")}
+            className="w-full p-4 text-left text-body-m-14 text-black"
+          >
             Terms & Policies
           </button>
           <div className="flex w-full items-center gap-2.5 p-4 text-body-m-14 text-black">
