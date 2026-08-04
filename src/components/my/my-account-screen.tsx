@@ -17,8 +17,11 @@ export function MyAccountScreen() {
       </div>
 
       <div className="flex w-full flex-col">
-        {/* TODO: navigate to the edit-profile route once it exists */}
-        <button type="button" className="w-full p-4 text-left text-body-m-14 text-black">
+        <button
+          type="button"
+          onClick={() => router.push("/my/account/edit")}
+          className="w-full p-4 text-left text-body-m-14 text-black"
+        >
           Edit Profile
         </button>
         {/* ponytail: no auth session to clear yet, just returns to the login screen */}
