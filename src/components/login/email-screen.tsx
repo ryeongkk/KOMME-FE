@@ -7,7 +7,14 @@ import { TextField } from "@/components/ui/text-field";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function EmailScreen() {
+type EmailScreenProps = {
+  headerTitle: string;
+  heading: string;
+  /** Route to continue to once the email is valid; the email is appended as a `?email=` query param. */
+  nextPath: string;
+};
+
+export function EmailScreen({ headerTitle, heading, nextPath }: EmailScreenProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [touched, setTouched] = useState(false);
@@ -17,7 +24,7 @@ export function EmailScreen() {
 
   const handleNext = () => {
     if (!isValidEmail) return;
-    router.push(`/login/code?email=${encodeURIComponent(email)}`);
+    router.push(`${nextPath}?email=${encodeURIComponent(email)}`);
   };
 
   return (
@@ -26,14 +33,14 @@ export function EmailScreen() {
         <button type="button" aria-label="Back" onClick={() => router.back()} className="text-gray-900">
           <ArrowLeftIcon className="size-6" />
         </button>
-        <p className="text-body-sb-16 text-black">Profile Setting</p>
+        <p className="text-body-sb-16 text-black">{headerTitle}</p>
         <div className="size-6" aria-hidden />
       </div>
 
       <div className="mt-4 w-full">
         <TextField
           name="email"
-          label="Enter your email address"
+          label={heading}
           type="email"
           placeholder="Enter your email address"
           value={email}

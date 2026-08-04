@@ -19,7 +19,13 @@ function formatTime(totalSeconds: number) {
   return `${minutes}:${seconds}`;
 }
 
-export function CodeScreen() {
+type CodeScreenProps = {
+  headerTitle: string;
+  /** Route to continue to once the code is verified. */
+  nextPath: string;
+};
+
+export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
   const router = useRouter();
   const email = useSearchParams().get("email") ?? "";
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""));
@@ -77,7 +83,7 @@ export function CodeScreen() {
       setShowToast(true);
       return;
     }
-    router.push("/login/password");
+    router.push(nextPath);
   };
 
   return (
@@ -86,7 +92,7 @@ export function CodeScreen() {
         <button type="button" aria-label="Back" onClick={() => router.back()} className="text-gray-900">
           <ArrowLeftIcon className="size-6" />
         </button>
-        <p className="text-body-sb-16 text-black">Profile Setting</p>
+        <p className="text-body-sb-16 text-black">{headerTitle}</p>
         <div className="size-6" aria-hidden />
       </div>
 

@@ -8,7 +8,12 @@ import { TextField } from "@/components/ui/text-field";
 const PASSWORD_HINT = "Password must be 8–20 characters with letters, numbers, and special characters.";
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$/;
 
-export function PasswordScreen() {
+type PasswordScreenProps = {
+  headerTitle: string;
+  heading: string;
+};
+
+export function PasswordScreen({ headerTitle, heading }: PasswordScreenProps) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -33,12 +38,12 @@ export function PasswordScreen() {
         <button type="button" aria-label="Back" onClick={() => router.back()} className="text-gray-900">
           <ArrowLeftIcon className="size-6" />
         </button>
-        <p className="text-body-sb-16 text-black">Profile Setting</p>
+        <p className="text-body-sb-16 text-black">{headerTitle}</p>
         <div className="size-6" aria-hidden />
       </div>
 
       <div className="mt-4 flex w-full flex-col gap-4">
-        <p className="text-heading-b-18 text-black">Enter your password</p>
+        <p className="text-heading-b-18 text-black">{heading}</p>
 
         <TextField
           name="password"

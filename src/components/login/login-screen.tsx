@@ -45,7 +45,9 @@ export function LoginScreen() {
             Sign Up
           </button>
           <span aria-hidden>|</span>
-          <button type="button">Reset Password</button>
+          <button type="button" onClick={() => router.push("/login/reset/email")}>
+            Reset Password
+          </button>
         </div>
       </div>
 
