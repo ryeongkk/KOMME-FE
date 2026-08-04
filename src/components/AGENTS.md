@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-08-01 | Updated: 2026-08-01 -->
+<!-- Generated: 2026-08-01 | Updated: 2026-08-05 -->
 
 # components
 
@@ -11,8 +11,9 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 
 | 디렉토리 | 설명 |
 |-----------|---------|
-| `ui/` | 특정 기능에 속하지 않는 범용 재사용 프리미티브 (예: `bottom-sheet.tsx`, `text-field.tsx`) |
+| `ui/` | 특정 기능에 속하지 않는 범용 재사용 프리미티브 (예: `bottom-sheet.tsx`, `text-field.tsx`, `language-bottom-sheet.tsx`) |
 | `login/` | 로그인 플로우 화면 전용 컴포넌트 (`login-screen.tsx` = `/login`, `terms-screen.tsx` = `/login/terms`, `email-screen.tsx` = `/login/email`, `code-screen.tsx` = `/login/code`, `password-screen.tsx` = `/login/password`, `nickname-screen.tsx` = `/login/nickname`) |
+| `mypage/` | 마이페이지 플로우 화면 전용 컴포넌트 (`mypage-screen.tsx` = `/mypage`, `my-account-screen.tsx` = `/mypage/account`) |
 
 ## 주요 파일
 
@@ -30,6 +31,8 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 - `password-screen.tsx`는 완료 시 `/login`(로그인 메인 화면)으로 이동합니다 — 원래 회원가입 순서(약관 동의 → 이메일 → 코드 → 비밀번호 → 닉네임 → 완료)상 다음은 `/login/nickname`이지만, 현재는 그렇게 연결돼 있지 않습니다. 실제 순서대로 이어붙일 때 `handleNext`를 바꾸세요.
 - `email-screen.tsx`/`code-screen.tsx`/`password-screen.tsx`는 회원가입(`/login/email`, `/login/code`, `/login/password`)과 비밀번호 재설정(`/login/reset/email`, `/login/reset/code`, `/login/reset/password`)이 **화면 컴포넌트는 공유하되 라우트는 분리**되어 있습니다. 각 화면은 문구를 URL이나 내부 분기로 알아내지 않고 전부 **props로만** 받습니다 (`headerTitle`, `heading`, `nextPath` 등) — 그래서 화면 컴포넌트 자체는 지금이 가입 플로우인지 재설정 플로우인지 전혀 모릅니다. 어떤 문구를 쓸지/다음에 어디로 갈지는 오직 각 라우트의 `page.tsx`(예: `src/app/login/reset/email/page.tsx`)가 prop으로 정합니다. 나중에 실제 API를 붙일 때도 이 지점(각 `page.tsx`, 또는 거기서 넘기는 `onSubmit` 콜백 prop)에서 가입용/재설정용 엔드포인트를 나눠 부르면 되고, 화면 컴포넌트 안에는 flow 분기를 넣지 마세요. 로그인 메인의 Sign Up은 `/login/terms`를 거쳐 `/login/email`로, Reset Password는 그 약관 단계 없이 바로 `/login/reset/email`로 진입합니다.
 - `icons.tsx`는 화면에 속하지 않는 전역 공유 자산이라 하위 폴더로 옮기지 않고 루트에 유지합니다.
+- `ui/language-bottom-sheet.tsx`는 언어 선택 바텀시트(고정 언어 목록 + 선택 표시)로, `login-screen.tsx`(`/login`)와 `mypage-screen.tsx`(`/mypage`)가 공유합니다. 원래 `login-screen.tsx`에만 있던 걸 두 번째 사용처(마이페이지)가 생기면서 `ui/`로 옮긴 것 — 트리거 버튼(`popoverTarget`)은 각 화면이 알아서 렌더링하고, 이 컴포넌트는 `id`만 받아 시트 내용만 책임집니다.
+- `mypage-screen.tsx`의 하단 탭바(`Tapbar`)는 아직 이 화면에서만 쓰여서 별도 파일로 빼지 않고 `mypage-screen.tsx` 안에 로컬 컴포넌트로 둡니다. Home/Course 라우트가 생겨 다른 화면에서도 필요해지면 그때 `ui/`로 옮기세요. Course 탭은 아직 라우트가 없어 클릭해도 아무 일도 일어나지 않습니다 — `/course`가 생기면 연결하세요.
 
 ### 아이콘 다루기
 - 아이콘 라이브러리 의존성(`@iconify/react`, `lucide-react` 등)은 의도적으로 없습니다. 전부 Material Symbols 표준 글리프지만, Next 16 + Turbopack에서 `unplugin-icons` 설정 리스크를 감수하느니 25개를 인라인하는 쪽이 쌉니다. 아이콘이 100개를 넘거나 디자이너가 계속 새로 추가해서 Figma 왕복이 병목이 되면 그때 다시 판단하세요.

@@ -1,14 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { AppleIcon, CheckIcon, GlobeIcon, GoogleIcon } from "@/components/icons";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-
-const languages = [
-  { label: "English", selected: true },
-  { label: "中文", selected: false },
-  { label: "日本語", selected: false },
-];
+import { AppleIcon, GlobeIcon, GoogleIcon } from "@/components/icons";
+import { LanguageBottomSheet } from "@/components/ui/language-bottom-sheet";
 
 export function LoginScreen() {
   const router = useRouter();
@@ -77,19 +71,7 @@ export function LoginScreen() {
         Language Setting
       </button>
 
-      <BottomSheet id="language-setting" title="Language Setting">
-        <div className="flex w-full flex-col items-start">
-          {languages.map((language) => (
-            <div
-              key={language.label}
-              className="flex w-full items-center gap-2.5 p-4 text-body-m-14 text-black"
-            >
-              <span className="flex-1">{language.label}</span>
-              {language.selected && <CheckIcon className="size-6 text-gray-400" />}
-            </div>
-          ))}
-        </div>
-      </BottomSheet>
+      <LanguageBottomSheet id="language-setting" />
     </>
   );
 }
