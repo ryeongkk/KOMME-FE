@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowRightIcon, HomeIcon, MapIcon, MypageIcon } from "@/components/icons";
-import { LanguageBottomSheet } from "@/components/ui/language-bottom-sheet";
 
 export function MypageScreen() {
   const router = useRouter();
@@ -32,7 +31,7 @@ export function MypageScreen() {
           <p className="px-4 text-caption-sb-12 text-gray-500">General</p>
           <button
             type="button"
-            popoverTarget="language-setting"
+            onClick={() => router.push("/mypage/language")}
             className="w-full p-4 text-left text-body-m-14 text-black"
           >
             Language Setting
@@ -54,8 +53,6 @@ export function MypageScreen() {
       </div>
 
       <Tapbar />
-
-      <LanguageBottomSheet id="language-setting" />
     </>
   );
 }
