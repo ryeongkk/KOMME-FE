@@ -19,7 +19,7 @@ export function NicknameScreen() {
   const [showToast, setShowToast] = useState(false);
 
   const isValidFormat = NICKNAME_PATTERN.test(nickname);
-  const hasFormatError = touched && ((nickname.length > 0 && !isValidFormat) || isDuplicate);
+  const hasFormatError = touched && nickname.length > 0 && !isValidFormat;
   const canStart = isValidFormat && !isDuplicate;
 
   useEffect(() => {
@@ -61,7 +61,13 @@ export function NicknameScreen() {
           value={nickname}
           onChange={handleChange}
           onBlur={() => setTouched(true)}
-          error={hasFormatError ? "Please use 2–20 characters, letters and numbers only." : undefined}
+          error={
+            hasFormatError
+              ? "Please use 2–20 characters, letters and numbers only."
+              : isDuplicate
+                ? "This nickname is already in use."
+                : undefined
+          }
           helperText="Please use 2–20 characters, letters and numbers only."
         />
       </div>
@@ -69,6 +75,7 @@ export function NicknameScreen() {
       <div className="relative mt-auto w-full">
         {isDuplicate && (
           <div
+            role="alert"
             className={`absolute bottom-full left-1/2 mb-5 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-xl bg-gray-700 px-4 py-3 transition-all duration-300 ${
               showToast ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
             }`}

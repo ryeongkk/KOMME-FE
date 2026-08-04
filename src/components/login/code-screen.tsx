@@ -35,7 +35,8 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   const isComplete = digits.every((digit) => digit.length === 1);
-  const canSubmit = isComplete && !incorrect;
+  const isExpired = secondsLeft <= 0;
+  const canSubmit = isComplete && !incorrect && !isExpired;
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -77,7 +78,7 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
   };
 
   const handleNext = () => {
-    if (!isComplete) return;
+    if (!isComplete || isExpired) return;
     if (digits.join("") !== CORRECT_CODE) {
       setIncorrect(true);
       setShowToast(true);
@@ -123,7 +124,7 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
                   value={digit}
                   onChange={(event) => handleDigitChange(index, event.target.value)}
                   onKeyDown={(event) => handleKeyDown(index, event)}
-                  className={`h-[45px] w-12 rounded-lg border bg-white text-center text-body-sb-16 text-gray-900 outline-none ${
+                  className={`h-[45px] w-12 rounded-lg border bg-white text-center text-body-sb-16 text-gray-900 outline-none focus-visible:ring-2 focus-visible:ring-gray-900 ${
                     incorrect ? "border-negative" : "border-gray-200"
                   }`}
                 />
@@ -147,6 +148,7 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
       <div className="relative mt-auto w-full">
         {incorrect && (
           <div
+            role="alert"
             className={`absolute bottom-full left-1/2 mb-5 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-xl bg-gray-700 px-4 py-3 transition-all duration-300 ${
               showToast ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
             }`}

@@ -25,12 +25,12 @@ Figma MCP로 뽑은 값과 기존 디자인 토큰을 근거로 화면을 구현
 정말 없을 때만 Figma MCP `get_variable_defs`(색상은 보통 노드 `142:2027`, Color System)로 정확한 값을 뽑아 같은 블록에 추가하고, **나중에 재검증할 수 있도록 노드 ID를 코멘트로 남긴다.** 절대 스크린샷을 보고 눈대중으로 hex 값을 찍지 않는다.
 
 ### 4. 아이콘 — 있는 것부터
-필요한 아이콘이 `src/components/icons.tsx`의 기존 25개 중에 있는지 먼저 확인한다 (`import { XIcon } from "@/components/icons"`). 없을 때만 Figma MCP `download_assets`(아이콘 섹션 노드 `157:2536` 근처)로 받아 `components/AGENTS.md`에 정리된 절차를 따른다:
+필요한 아이콘이 `src/components/icons.tsx`의 기존 25개 중에 있는지 먼저 확인한다 (`import { XIcon } from "@/components/icons"`). 없을 때만 Figma MCP `download_assets`(아이콘 섹션 노드 `157:2536` 근처)로 받아 `src/components/AGENTS.md`에 정리된 절차를 따른다:
 - export에 딸려오는 캔버스 배경 rect, 아트보드 프레임 path(좌표가 음수인 것)는 지우고 `<g id="icon/NAME">` 안쪽만 남긴다.
 - 레이어 `id` 속성 제거, 하드코딩된 색은 `currentColor`로, `fill-rule` 등 속성은 JSX camelCase로 바꾼다.
 - 원본 아이콘 이름을 코멘트로 남긴다.
 - 크기·색은 아이콘 안에 박지 않는다 — 호출부에서 `className="size-6 text-gray-400"` 식으로 준다.
-- 새 라이브러리 의존성(`lucide-react` 등)을 추가하지 않는다. 이미 그렇게 안 하기로 정한 이유가 있다 (`components/AGENTS.md` 참고).
+- 새 라이브러리 의존성(`lucide-react` 등)을 추가하지 않는다. 이미 그렇게 안 하기로 정한 이유가 있다 (`src/components/AGENTS.md` 참고).
 
 아이콘 라이브러리 없이 인라인으로 버티는 건 지금 규모(25개)에서 합리적인 선택이지, 앞으로도 무조건 그래야 한다는 뜻은 아니다 — 아이콘이 100개를 넘거나 계속 새로 추가돼서 병목이 되면 그때 재판단한다.
 

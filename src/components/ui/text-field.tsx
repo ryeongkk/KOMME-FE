@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { CloseIcon, EyeIcon, EyeOffIcon } from "@/components/icons";
 
 type TextFieldProps = {
@@ -34,12 +34,23 @@ export function TextField({
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
+  const reactId = useId();
+  const inputId = `${reactId}-input`;
+  const labelId = `${reactId}-label`;
+  const messageId = `${reactId}-message`;
+  const message = error ?? helperText;
 
   return (
     <div className={`flex w-full flex-col ${labelVariant === "field" ? "gap-1" : "gap-4"}`}>
-      <p className={labelVariant === "field" ? "text-body-sb-14 text-gray-500" : "text-heading-b-18 text-black"}>
-        {label}
-      </p>
+      {labelVariant === "field" ? (
+        <label htmlFor={inputId} className="text-body-sb-14 text-gray-500">
+          {label}
+        </label>
+      ) : (
+        <p id={labelId} className="text-heading-b-18 text-black">
+          {label}
+        </p>
+      )}
 
       <div className="flex w-full flex-col gap-1">
         <div
@@ -48,13 +59,17 @@ export function TextField({
           }`}
         >
           <input
+            id={inputId}
             type={inputType}
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onBlur={onBlur}
             placeholder={placeholder}
             maxLength={maxLength}
-            className="flex-1 text-body-m-14 text-gray-900 placeholder-gray-400 outline-none"
+            aria-labelledby={labelVariant === "heading" ? labelId : undefined}
+            aria-invalid={!!error}
+            aria-describedby={message ? messageId : undefined}
+            className="flex-1 text-body-m-14 text-gray-900 placeholder-gray-400 outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
           />
           {value.length > 0 &&
             (isPassword ? (
@@ -77,8 +92,10 @@ export function TextField({
               </button>
             ))}
         </div>
-        {(error ?? helperText) && (
-          <p className={`text-caption-r-12 ${error ? "text-negative" : "text-gray-500"}`}>{error ?? helperText}</p>
+        {message && (
+          <p id={messageId} className={`text-caption-r-12 ${error ? "text-negative" : "text-gray-500"}`}>
+            {message}
+          </p>
         )}
       </div>
     </div>

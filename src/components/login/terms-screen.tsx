@@ -38,6 +38,7 @@ export function TermsScreen() {
 
         <button
           type="button"
+          aria-pressed={allChecked}
           onClick={() =>
             setChecked(
               allChecked
@@ -60,6 +61,7 @@ export function TermsScreen() {
             <button
               key={term.key}
               type="button"
+              aria-pressed={checked[term.key]}
               onClick={() => setChecked((prev) => ({ ...prev, [term.key]: !prev[term.key] }))}
               className="flex w-full items-center gap-3 text-left text-body-m-14 text-black"
             >

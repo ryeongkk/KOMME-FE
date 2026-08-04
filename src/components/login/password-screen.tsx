@@ -11,9 +11,11 @@ const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$/;
 type PasswordScreenProps = {
   headerTitle: string;
   heading: string;
+  /** Route to continue to once the password is confirmed. */
+  nextPath: string;
 };
 
-export function PasswordScreen({ headerTitle, heading }: PasswordScreenProps) {
+export function PasswordScreen({ headerTitle, heading, nextPath }: PasswordScreenProps) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,7 +31,7 @@ export function PasswordScreen({ headerTitle, heading }: PasswordScreenProps) {
 
   const handleNext = () => {
     if (!canSubmit) return;
-    router.push("/login");
+    router.push(nextPath);
   };
 
   return (
