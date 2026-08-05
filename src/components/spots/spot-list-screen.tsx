@@ -1,44 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeftIcon, ClockIcon, SaveSmIcon } from "@/components/icons";
-
-const TOPICS = [
-  "Korean Spa/Sauna",
-  "Traditional Market",
-  "Chimaek",
-  "Convenience Store",
-  "K-Culture",
-  "Hiking/Walking",
-] as const;
+import { SPOTS, TOPICS, type Spot } from "./data";
 
 const FILTERS = ["Most Popular", "All", ...TOPICS] as const;
 type Filter = (typeof FILTERS)[number];
 
-type Spot = {
-  region: string;
-  name: string;
-  saves: number;
-  distanceKm: number;
-  hours: string;
-  topic: (typeof TOPICS)[number];
-};
-
-// ponytail: no spot API yet, static data mirrors the Figma mock (3 spots, listed twice)
-const SPOTS: Spot[] = [
-  { region: "Seoul Mapo", name: "The Park Spa Land", saves: 4, distanceKm: 2.8, hours: "10:00~23:00", topic: "Korean Spa/Sauna" },
-  { region: "Seoul Gangnam", name: "Moclock Gangnam Main Branch | Head Spa", saves: 6, distanceKm: 3.1, hours: "10:00~23:00", topic: "Korean Spa/Sauna" },
-  { region: "Seoul Dongdaemun", name: "Sparex Dongdaemun", saves: 4, distanceKm: 2.8, hours: "10:00~23:00", topic: "Korean Spa/Sauna" },
-  { region: "Seoul Mapo", name: "The Park Spa Land", saves: 4, distanceKm: 2.8, hours: "10:00~23:00", topic: "Korean Spa/Sauna" },
-  { region: "Seoul Gangnam", name: "Moclock Gangnam Main Branch | Head Spa", saves: 6, distanceKm: 3.1, hours: "10:00~23:00", topic: "Korean Spa/Sauna" },
-  { region: "Seoul Dongdaemun", name: "Sparex Dongdaemun", saves: 4, distanceKm: 2.8, hours: "10:00~23:00", topic: "Korean Spa/Sauna" },
-];
+// the Figma mock lists each spot twice
+const LISTED_SPOTS = [...SPOTS, ...SPOTS];
 
 function filterSpots(filter: Filter): Spot[] {
-  if (filter === "Most Popular") return [...SPOTS].sort((a, b) => b.saves - a.saves);
-  if (filter === "All") return SPOTS;
-  return SPOTS.filter((spot) => spot.topic === filter);
+  if (filter === "Most Popular") return [...LISTED_SPOTS].sort((a, b) => b.saves - a.saves);
+  if (filter === "All") return LISTED_SPOTS;
+  return LISTED_SPOTS.filter((spot) => spot.topic === filter);
 }
 
 export function SpotListScreen() {
@@ -79,7 +56,7 @@ export function SpotListScreen() {
 
         <div className="flex w-full flex-col gap-3">
           {filterSpots(filter).map((spot, i) => (
-            <SpotCard key={`${spot.name}-${i}`} spot={spot} />
+            <SpotCard key={`${spot.id}-${i}`} spot={spot} />
           ))}
         </div>
       </div>
@@ -89,7 +66,7 @@ export function SpotListScreen() {
 
 function SpotCard({ spot }: { spot: Spot }) {
   return (
-    <div className="flex w-full items-center gap-3">
+    <Link href={`/spots/${spot.id}`} className="flex w-full items-center gap-3">
       {/* ponytail: no photo API yet, swap for real photos when it exists */}
       <div className="size-24 shrink-0 rounded-[4.8px] bg-gray-100" />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -108,6 +85,6 @@ function SpotCard({ spot }: { spot: Spot }) {
           <p className="text-caption-m-12 text-gray-500">{spot.hours}</p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
