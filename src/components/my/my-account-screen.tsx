@@ -33,8 +33,8 @@ export function MyAccountScreen() {
         </button>
         <button
           type="button"
-          disabled
-          className="w-full p-4 text-center text-caption-sb-12 text-gray-400"
+          onClick={() => router.push("/my/account/delete")}
+          className="w-full p-4 text-left text-body-m-14 text-black"
         >
           Delete Account
         </button>
