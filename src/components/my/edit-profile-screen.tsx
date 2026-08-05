@@ -6,21 +6,20 @@ import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
 import { TextField } from "@/components/ui/text-field";
 
 const NICKNAME_PATTERN = /^[a-zA-Z0-9]{2,20}$/;
-// ponytail: reserved-word check is a client-side stand-in for the real duplicate-check API,
-// which doesn't exist yet. Swap this out once the backend endpoint is available.
+const NICKNAME_HINT = "Please use 2–20 characters, letters and numbers only.";
+// ponytail: reserved-word check stands in for the real duplicate-check API — same stand-in as login/nickname-screen.tsx
 const RESERVED_NICKNAMES = ["admin"];
 const TOAST_DURATION_MS = 2500;
 
-export function NicknameScreen() {
+export function EditProfileScreen() {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
-  const [touched, setTouched] = useState(false);
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   const isValidFormat = NICKNAME_PATTERN.test(nickname);
-  const hasFormatError = touched && nickname.length > 0 && !isValidFormat;
-  const canStart = isValidFormat && !isDuplicate;
+  const hasError = (nickname.length > 0 && !isValidFormat) || isDuplicate;
+  const canEdit = isValidFormat && !isDuplicate;
 
   useEffect(() => {
     if (!showToast) return;
@@ -33,46 +32,39 @@ export function NicknameScreen() {
     setIsDuplicate(false);
   };
 
-  const handleStart = () => {
-    if (!isValidFormat) return;
+  const handleEdit = () => {
+    if (!canEdit) return;
     if (RESERVED_NICKNAMES.includes(nickname.toLowerCase())) {
       setIsDuplicate(true);
       setShowToast(true);
       return;
     }
-    // TODO: navigate to the sign-up completion screen once that route exists
+    router.push("/my/account");
   };
 
   return (
     <>
-      <div className="flex w-full items-center justify-between py-2.5">
+      <div className="flex w-full items-center justify-between px-4 py-2.5">
         <button type="button" aria-label="Back" onClick={() => router.back()} className="text-gray-900">
           <ArrowLeftIcon className="size-6" />
         </button>
-        <p className="text-body-sb-16 text-black">Profile Setting</p>
+        <p className="text-body-sb-16 text-black">Edit Profile</p>
         <div className="size-6" aria-hidden />
       </div>
 
-      <div className="mt-4 w-full">
+      <div className="mt-4 w-full px-4">
         <TextField
           name="nickname"
-          label="Enter your nickname"
+          label="Enter your new nickname"
           placeholder="Enter your nickname"
           value={nickname}
           onChange={handleChange}
-          onBlur={() => setTouched(true)}
-          error={
-            hasFormatError
-              ? "Please use 2–20 characters, letters and numbers only."
-              : isDuplicate
-                ? "This nickname is already in use."
-                : undefined
-          }
-          helperText="Please use 2–20 characters, letters and numbers only."
+          error={hasError ? NICKNAME_HINT : undefined}
+          helperText={NICKNAME_HINT}
         />
       </div>
 
-      <div className="relative mt-auto w-full">
+      <div className="relative mt-auto flex w-full flex-col px-4 pt-5 pb-3">
         {isDuplicate && (
           <div
             role="alert"
@@ -87,13 +79,13 @@ export function NicknameScreen() {
 
         <button
           type="button"
-          disabled={!canStart}
-          onClick={handleStart}
-          className={`flex h-[52px] w-full items-center justify-center rounded-lg text-body-m-14 ${
-            canStart ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
+          disabled={!canEdit}
+          onClick={handleEdit}
+          className={`flex h-[53px] w-full items-center justify-center rounded-lg text-body-m-14 ${
+            canEdit ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
           }`}
         >
-          Start
+          Edit
         </button>
       </div>
     </>
