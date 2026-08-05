@@ -25,12 +25,17 @@ const PLACES: Place[] = [
   { name: "Sparex Dongdaemun", saves: 4, distanceKm: 2.8 },
 ];
 
-const UPCOMING_SCHEDULE = {
-  dDay: "D-1",
-  title: "Hongdae Spa Day",
-  date: "2026-07-28",
-  spots: 3,
+type Schedule = {
+  dDay: string;
+  title: string;
+  date: string;
+  spots: number;
 };
+
+// ponytail: no course-creation flow yet, so this is a stub — null renders the empty
+// state (Figma node 352:6583); set a Schedule to preview the with-course state
+// (node 137:1175). Swap for the real "current course" fetch once the API exists.
+const UPCOMING_SCHEDULE: Schedule | null = null;
 
 export function HomeScreen() {
   const [selectedTopic, setSelectedTopic] = useState<(typeof TOPICS)[number]>(TOPICS[0]);
@@ -48,10 +53,12 @@ export function HomeScreen() {
       <div className="flex flex-1 flex-col gap-7 pb-3">
         <div className="flex w-full flex-col gap-4 px-4">
           <div className="flex h-6 w-full items-center justify-between">
-            <p className="text-body-sb-16 text-black">You have an upcoming course</p>
+            <p className="text-body-sb-16 text-black">
+              {UPCOMING_SCHEDULE ? "You have an upcoming course" : "You have no upcoming courses"}
+            </p>
             <p className="text-caption-m-12 text-gray-400">More</p>
           </div>
-          <ScheduleCard />
+          {UPCOMING_SCHEDULE ? <ScheduleCard schedule={UPCOMING_SCHEDULE} /> : <EmptyScheduleCard />}
         </div>
 
         <div className="flex w-full flex-col gap-3 px-4">
@@ -96,23 +103,23 @@ export function HomeScreen() {
   );
 }
 
-function ScheduleCard() {
+function ScheduleCard({ schedule }: { schedule: Schedule }) {
   return (
     <div className="flex w-full flex-col items-center gap-2 rounded-[10px] border border-gray-200 px-4 py-5">
       <div className="flex w-full flex-col gap-1">
         <span className="w-fit rounded bg-secondary-300 px-2 py-0.5 text-caption-sb-12 text-secondary-100">
-          {UPCOMING_SCHEDULE.dDay}
+          {schedule.dDay}
         </span>
-        <p className="text-body-sb-16 text-black">{UPCOMING_SCHEDULE.title}</p>
+        <p className="text-body-sb-16 text-black">{schedule.title}</p>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
             <CalendarIcon className="size-4 text-gray-500" />
-            <p className="text-caption-sb-12 text-gray-500">{UPCOMING_SCHEDULE.date}</p>
+            <p className="text-caption-sb-12 text-gray-500">{schedule.date}</p>
           </div>
           <span className="text-caption-m-12 text-gray-500">|</span>
           <div className="flex items-center gap-1">
             <LocationIcon className="size-4 text-gray-500" />
-            <p className="text-caption-sb-12 text-gray-500">{UPCOMING_SCHEDULE.spots} spots</p>
+            <p className="text-caption-sb-12 text-gray-500">{schedule.spots} spots</p>
           </div>
         </div>
       </div>
@@ -130,6 +137,26 @@ function ScheduleCard() {
           View Course
         </button>
       </div>
+    </div>
+  );
+}
+
+function EmptyScheduleCard() {
+  return (
+    <div className="flex w-full flex-col items-start gap-2 rounded-[10px] border border-gray-200 px-4 py-5">
+      <div className="flex w-full flex-col gap-1">
+        <p className="text-body-sb-16 text-black">Plan your course</p>
+        <p className="text-body-m-14 text-gray-500">
+          {`Pick a topic below and we'll build a course around your location`}
+        </p>
+      </div>
+      {/* ponytail: no /course/create route yet, wire up onClick when it exists */}
+      <button
+        type="button"
+        className="flex h-10 w-full items-center justify-center rounded-lg bg-secondary-100 text-body-m-14 text-secondary-300"
+      >
+        Start Creating
+      </button>
     </div>
   );
 }
