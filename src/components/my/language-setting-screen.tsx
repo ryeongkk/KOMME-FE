@@ -29,6 +29,7 @@ export function LanguageSettingScreen() {
           <button
             key={language}
             type="button"
+            aria-pressed={selected === language}
             onClick={() => setSelected(language)}
             className="flex w-full items-center gap-2.5 p-4 text-left text-body-m-14 text-black"
           >

@@ -76,6 +76,7 @@ function Tapbar() {
       {/* ponytail: Course tab has no route yet, wire up onClick when /course exists */}
       <button
         type="button"
+        disabled
         className="flex flex-1 flex-col items-center justify-center gap-0.5"
       >
         <MapIcon className="size-6 text-gray-300" />

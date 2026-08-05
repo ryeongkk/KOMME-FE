@@ -55,7 +55,9 @@ export function TextField({
       <div className="flex w-full flex-col gap-1">
         <div
           className={`flex h-12 w-full items-center gap-2.5 rounded-lg border bg-white p-4 ${
-            error ? "border-negative" : "border-gray-200 focus-within:border-gray-900"
+            error
+              ? "border-negative focus-within:ring-2 focus-within:ring-gray-900"
+              : "border-gray-200 focus-within:border-gray-900"
           }`}
         >
           <input
