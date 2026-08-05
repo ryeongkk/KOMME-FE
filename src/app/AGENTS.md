@@ -27,6 +27,7 @@ Next.js App Router 루트입니다: 라우트, 루트 레이아웃, 전역 스�
 | `icon-512.png/` | 512×512 버전, 패턴은 동일 (`icon-512.png/AGENTS.md` 참고)                                            |
 | `login/`        | 로그인 플로우 라우트 — `/login`, `/login/terms`, `/login/email`, `/login/code`, `/login/password`, `/login/nickname`, `/login/reset/email`, `/login/reset/code`, `/login/reset/password`. 화면 컴포넌트는 `src/components/login/`에 있고 각 `page.tsx`는 그걸 렌더링만 함 — `reset/` 쪽 3개는 회원가입과 같은 화면 컴포넌트를 다른 문구/다음 라우트 prop으로 재사용함 (`components/AGENTS.md` 참고) |
 | `my/`           | 마이페이지 라우트 — `/my`(하단 탭바 포함, 프로필 행 클릭 시 `/my/account`로, Language Setting 행 클릭 시 `/my/language`로, Terms & Policies 행 클릭 시 `/my/terms`로 이동), `/my/account`(프로필 편집/로그아웃/계정 삭제, Edit Profile 행 클릭 시 `/my/account/edit`로 이동), `/my/account/edit`(닉네임 변경 — 형식 검증은 `login/nickname-screen.tsx`와 동일한 정규식·예약어 스텁·토스트 패턴 재사용), `/my/language`(언어 선택 — 로그인 화면의 바텀시트와 달리 전용 페이지), `/my/terms`(약관 및 정책 목록), `/my/terms/service`·`/my/terms/privacy`·`/my/terms/location`(각 약관 상세 — 헤더만 있고 본문은 Figma 와이어프레임에 아직 없어 비워둠). 화면 컴포넌트는 `src/components/my/`에 있고 각 `page.tsx`는 그걸 렌더링만 함. 하단 탭바(`Tapbar`)는 홈 화면이 생기면서 두 번째 사용처가 필요해져 `components/ui/tapbar.tsx`로 옮김 |
+| `spots/`        | 스팟 리스트 라우트 — `/spots`(Figma 노드 `137:1243`, 뒤로가기 헤더 + Most Popular/All/토픽 필터 탭 + 스팟 카드 리스트, 탭바 없음). 홈 화면의 "Select a topic you're interested in" 섹션 More에서 진입. 화면 컴포넌트는 `src/components/spots/`에 있고 `page.tsx`는 그걸 렌더링만 함. 정렬 바텀시트·스팟 상세는 아직 없음(Figma에는 있으나 스코프 밖) — 스팟 이미지도 사진 API가 없어 회색 박스임 |
 
 ## AI 에이전트를 위한 안내
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { CalendarIcon, LocationIcon, SaveSmIcon } from "@/components/icons";
 import { Tapbar } from "@/components/ui/tapbar";
@@ -64,7 +65,9 @@ export function HomeScreen() {
         <div className="flex w-full flex-col gap-3 px-4">
           <div className="flex h-6 w-full items-center justify-between">
             <p className="text-body-sb-16 text-black">{`Select a topic you're interested in`}</p>
-            <p className="text-caption-m-12 text-gray-400">More</p>
+            <Link href="/spots" className="text-caption-m-12 text-gray-400">
+              More
+            </Link>
           </div>
           <div className="flex w-full items-center gap-1.5 overflow-x-auto">
             {TOPICS.map((topic) => {
