@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-08-01 | Updated: 2026-08-05 -->
+<!-- Generated: 2026-08-01 | Updated: 2026-08-06 -->
 
 # app
 
@@ -12,7 +12,7 @@ Next.js App Router 루트입니다: 라우트, 루트 레이아웃, 전역 스�
 | 파일              | 설명                                                                                                                                                                                                                               |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `layout.tsx`      | 루트 레이아웃. `next/font/google`로 Raleway를 불러오고, PWA `metadata`/`viewport`를 설정하며, `RegisterServiceWorker`를 마운트함. `children`을 `max-w-sm` 중앙 정렬 컨테이너로 감싸서 데스크톱 너비에서도 항상 모바일 폭으로 렌더링되고 양옆은 흰 여백임 |
-| `page.tsx`        | 홈 라우트(`/`) — **"KOMME" 한 줄짜리 플레이스홀더**. 스타터 내용은 걷어냈고 실제 제품 UI는 아직 없음                                                                                                                               |
+| `page.tsx`        | 홈 라우트(`/`) — `src/components/home/home-screen.tsx`를 렌더링만 함 (Figma 노드 `137:1175`, 하단 탭바 포함, 예정 코스/관심 주제/내 근처 인기 장소 섹션. 장소 이미지는 아직 사진 API가 없어 크기만 맞춘 회색 박스)                     |
 | `globals.css`     | Tailwind v4 테마: 색상 토큰(gray 50~900, `primary`, `secondary` 100~400, `negative`)과 11개 타이포그래피 토큰(`text-title-b-20`, `text-body-sb-16` 등). Figma 파일 `mGriQB29mZ6VpIDQDpo5F6`(Color System 노드 `142:2027`)에서 추출 |
 | `manifest.ts`     | PWA 매니페스트 — 이름, 아이콘, 테마 색상. `<html lang>`은 `en`인데 카피는 여전히 한국어임                                                                                                                                          |
 | `register-sw.tsx` | 클라이언트 컴포넌트. `public/sw.js`를 프로덕션 빌드에서만 등록함                                                                                                                                                                   |
@@ -26,7 +26,7 @@ Next.js App Router 루트입니다: 라우트, 루트 레이아웃, 전역 스�
 | `icon-192.png/` | 동적 PNG 아이콘 라우트 — `next/og`를 쓰는 `route.tsx`의 `GET` 핸들러 (`icon-192.png/AGENTS.md` 참고) |
 | `icon-512.png/` | 512×512 버전, 패턴은 동일 (`icon-512.png/AGENTS.md` 참고)                                            |
 | `login/`        | 로그인 플로우 라우트 — `/login`, `/login/terms`, `/login/email`, `/login/code`, `/login/password`, `/login/nickname`, `/login/reset/email`, `/login/reset/code`, `/login/reset/password`. 화면 컴포넌트는 `src/components/login/`에 있고 각 `page.tsx`는 그걸 렌더링만 함 — `reset/` 쪽 3개는 회원가입과 같은 화면 컴포넌트를 다른 문구/다음 라우트 prop으로 재사용함 (`components/AGENTS.md` 참고) |
-| `my/`           | 마이페이지 라우트 — `/my`(하단 탭바 포함, 프로필 행 클릭 시 `/my/account`로, Language Setting 행 클릭 시 `/my/language`로, Terms & Policies 행 클릭 시 `/my/terms`로 이동), `/my/account`(프로필 편집/로그아웃/계정 삭제, Edit Profile 행 클릭 시 `/my/account/edit`로 이동), `/my/account/edit`(닉네임 변경 — 형식 검증은 `login/nickname-screen.tsx`와 동일한 정규식·예약어 스텁·토스트 패턴 재사용), `/my/language`(언어 선택 — 로그인 화면의 바텀시트와 달리 전용 페이지), `/my/terms`(약관 및 정책 목록), `/my/terms/service`·`/my/terms/privacy`·`/my/terms/location`(각 약관 상세 — 헤더만 있고 본문은 Figma 와이어프레임에 아직 없어 비워둠). 화면 컴포넌트는 `src/components/my/`에 있고 각 `page.tsx`는 그걸 렌더링만 함. 하단 탭바(`Tapbar`)는 `my-screen.tsx` 안에 로컬 컴포넌트로만 있음 — Home/Course 라우트가 생겨 두 번째 사용처가 필요해지면 `components/ui/`로 옮길 것 |
+| `my/`           | 마이페이지 라우트 — `/my`(하단 탭바 포함, 프로필 행 클릭 시 `/my/account`로, Language Setting 행 클릭 시 `/my/language`로, Terms & Policies 행 클릭 시 `/my/terms`로 이동), `/my/account`(프로필 편집/로그아웃/계정 삭제, Edit Profile 행 클릭 시 `/my/account/edit`로 이동), `/my/account/edit`(닉네임 변경 — 형식 검증은 `login/nickname-screen.tsx`와 동일한 정규식·예약어 스텁·토스트 패턴 재사용), `/my/language`(언어 선택 — 로그인 화면의 바텀시트와 달리 전용 페이지), `/my/terms`(약관 및 정책 목록), `/my/terms/service`·`/my/terms/privacy`·`/my/terms/location`(각 약관 상세 — 헤더만 있고 본문은 Figma 와이어프레임에 아직 없어 비워둠). 화면 컴포넌트는 `src/components/my/`에 있고 각 `page.tsx`는 그걸 렌더링만 함. 하단 탭바(`Tapbar`)는 홈 화면이 생기면서 두 번째 사용처가 필요해져 `components/ui/tapbar.tsx`로 옮김 |
 
 ## AI 에이전트를 위한 안내
 

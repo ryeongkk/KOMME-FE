@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-08-01 | Updated: 2026-08-05 -->
+<!-- Generated: 2026-08-01 | Updated: 2026-08-06 -->
 
 # components
 
@@ -11,7 +11,8 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 
 | 디렉토리 | 설명 |
 |-----------|---------|
-| `ui/` | 특정 기능에 속하지 않는 범용 재사용 프리미티브 (예: `bottom-sheet.tsx`, `text-field.tsx`) |
+| `ui/` | 특정 기능에 속하지 않는 범용 재사용 프리미티브 (예: `bottom-sheet.tsx`, `text-field.tsx`, `tapbar.tsx`) |
+| `home/` | 홈 화면 전용 컴포넌트 (`home-screen.tsx` = `/`) |
 | `login/` | 로그인 플로우 화면 전용 컴포넌트 (`login-screen.tsx` = `/login`, `terms-screen.tsx` = `/login/terms`, `email-screen.tsx` = `/login/email`, `code-screen.tsx` = `/login/code`, `password-screen.tsx` = `/login/password`, `nickname-screen.tsx` = `/login/nickname`) |
 | `my/` | 마이페이지 플로우 화면 전용 컴포넌트 (`my-screen.tsx` = `/my`, `my-account-screen.tsx` = `/my/account`(로그아웃 확인 다이얼로그 포함), `edit-profile-screen.tsx` = `/my/account/edit`(닉네임 변경), `delete-account-screen.tsx` = `/my/account/delete`(계정 탈퇴 동의 + 최종 확인 다이얼로그), `language-setting-screen.tsx` = `/my/language`, `terms-policy-list-screen.tsx` = `/my/terms`, `terms-policy-detail-screen.tsx` = `/my/terms/service`·`/my/terms/privacy`·`/my/terms/location` 3개 라우트가 공유하는 헤더 전용 컴포넌트) |
 
@@ -33,7 +34,8 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 - `icons.tsx`는 화면에 속하지 않는 전역 공유 자산이라 하위 폴더로 옮기지 않고 루트에 유지합니다.
 - 언어 설정 UI는 화면마다 다릅니다: `login-screen.tsx`는 바텀시트(`ui/bottom-sheet.tsx` 위에 언어 목록을 인라인으로 렌더링, `popoverTarget`으로 트리거)로, `my/language-setting-screen.tsx`(`/my/language`)는 전용 페이지로 엽니다 — Figma에서 두 화면이 실제로 다르게 디자인되어 있어 공용 컴포넌트로 묶지 않았습니다. 둘 다 언어 목록이 정적 배열이라 실제로 언어를 바꾸는 로직은 없습니다(현재 영어 버전만 서비스).
 - `language-setting-screen.tsx`의 `CURRENT_LANGUAGE`는 실제 i18n이 없어서 "영어가 활성 언어"라고 흉내만 낸 상수입니다 — 다른 언어를 고르면 Confirm 버튼이 활성화되지만 눌러도 `/my`로 돌아갈 뿐 실제로 언어가 바뀌지는 않습니다. 실제 i18n 라우팅이 생기면 이 상수와 Confirm 버튼의 `onClick`을 교체하세요.
-- `my-screen.tsx`의 하단 탭바(`Tapbar`)는 아직 이 화면에서만 쓰여서 별도 파일로 빼지 않고 `my-screen.tsx` 안에 로컬 컴포넌트로 둡니다. Home/Course 라우트가 생겨 다른 화면에서도 필요해지면 그때 `ui/`로 옮기세요. Course 탭은 아직 라우트가 없어 클릭해도 아무 일도 일어나지 않습니다 — `/course`가 생기면 연결하세요.
+- 하단 탭바는 `ui/tapbar.tsx`에 `active` prop(`"home" | "course" | "my"`)을 받는 공용 컴포넌트로 있습니다 — `home-screen.tsx`와 `my-screen.tsx`가 같이 씁니다. Course 탭은 아직 라우트가 없어 클릭해도 아무 일도 일어나지 않습니다 — `/course`가 생기면 `TABS` 배열의 `href: null`을 실제 경로로 바꾸세요.
+- `home-screen.tsx`(`/`, Figma 노드 `137:1175`)의 예정 코스(`UPCOMING_SCHEDULE`)와 장소 목록(`PLACES`)은 아직 백엔드 API가 없어 하드코딩된 상수입니다 — 실제 코스/장소 조회 엔드포인트가 생기면 그걸로 교체하세요. 장소 카드 이미지는 실제 사진 API/에셋이 없어 크기만 맞춘 `bg-gray-100` 박스입니다.
 - `my-account-screen.tsx`의 "Log Out"은 바로 이동하지 않고 `ui/bottom-sheet.tsx`와 같은 네이티브 popover API(`popoverTarget`/`popover="auto"`)로 화면 중앙 확인 다이얼로그(`#logout-dialog`, Figma 노드 `392:14406`)를 띄웁니다. 지금은 이 화면에서만 쓰여서 로컬로 인라인했습니다 — 다른 화면에서도 로그아웃 확인이 필요해지면 그때 `ui/`로 옮기세요. "Log out" 확정 시 실제 세션 정리 없이 `/login`으로 이동합니다.
 - `my-account-screen.tsx`의 "Delete Account"는 `/my/account/delete`(`delete-account-screen.tsx`)로 이동합니다.
 - `delete-account-screen.tsx`(`/my/account/delete`, Figma 노드 `393:14585`/`393:14989`/`408:15111`)는 동의 체크박스로 하단 "Delete Account" 버튼을 활성화하고, 활성화된 버튼은 `my-account-screen.tsx`의 로그아웃 다이얼로그와 같은 네이티브 popover 패턴으로 "Final Confirmation" 다이얼로그(`#delete-confirm-dialog`)를 띄웁니다. 체크박스 아이콘 색은 채워졌을 때 `primary`, 비었을 때 `gray-300`(Figma 노드 `393:15025`/`393:15053` 변수값 기준). 실제 세션이 없어 로그아웃과 동일하게 최종 "Delete" 확정 시 세션 정리 없이 `/login`으로 이동합니다 — 실제 탈퇴 API가 생기면 이 지점에서 호출하세요.

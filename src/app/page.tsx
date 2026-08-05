@@ -1,3 +1,9 @@
+import { HomeScreen } from "@/components/home/home-screen";
+
 export default function Home() {
-  return <main className="flex flex-1 items-center justify-center">KOMME</main>;
+  return (
+    <main className="flex flex-1 flex-col bg-white">
+      <HomeScreen />
+    </main>
+  );
 }
