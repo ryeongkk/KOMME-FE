@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowRightIcon, HomeIcon, MapIcon, MypageIcon } from "@/components/icons";
+import { ArrowRightIcon, MypageIcon } from "@/components/icons";
+import { Tapbar } from "@/components/ui/tapbar";
 
 export function MyScreen() {
   const router = useRouter();
@@ -55,37 +56,7 @@ export function MyScreen() {
         </div>
       </div>
 
-      <Tapbar />
+      <Tapbar active="my" />
     </>
-  );
-}
-
-function Tapbar() {
-  const router = useRouter();
-
-  return (
-    <div className="flex w-full items-center border-t border-gray-100 bg-white py-2">
-      <button
-        type="button"
-        onClick={() => router.push("/")}
-        className="flex flex-1 flex-col items-center justify-center gap-0.5"
-      >
-        <HomeIcon className="size-6 text-gray-300" />
-        <span className="text-caption-m-12 text-gray-300">Home</span>
-      </button>
-      {/* ponytail: Course tab has no route yet, wire up onClick when /course exists */}
-      <button
-        type="button"
-        disabled
-        className="flex flex-1 flex-col items-center justify-center gap-0.5"
-      >
-        <MapIcon className="size-6 text-gray-300" />
-        <span className="text-caption-m-12 text-gray-300">Course</span>
-      </button>
-      <div aria-current="page" className="flex flex-1 flex-col items-center justify-center gap-0.5">
-        <MypageIcon className="size-6 text-gray-700" />
-        <span className="text-caption-m-12 text-gray-700">My</span>
-      </div>
-    </div>
   );
 }
