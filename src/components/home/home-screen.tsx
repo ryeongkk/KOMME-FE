@@ -95,7 +95,9 @@ export function HomeScreen() {
         <div className="flex w-full flex-col gap-3 px-4">
           <div className="flex h-6 w-full items-center justify-between">
             <p className="text-body-sb-16 text-black">Popular Near You</p>
-            <p className="text-caption-m-12 text-gray-400">More</p>
+            <Link href="/spots" className="text-caption-m-12 text-gray-400">
+              More
+            </Link>
           </div>
           <PlaceList places={PLACES} />
         </div>
