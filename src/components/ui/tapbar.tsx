@@ -5,7 +5,7 @@ import { HomeIcon, MapIcon, MypageIcon } from "@/components/icons";
 
 const TABS = [
   { key: "home", label: "Home", href: "/", Icon: HomeIcon },
-  { key: "course", label: "Course", href: null, Icon: MapIcon },
+  { key: "course", label: "Course", href: "/course", Icon: MapIcon },
   { key: "my", label: "My", href: "/my", Icon: MypageIcon },
 ] as const;
 
@@ -25,10 +25,8 @@ export function Tapbar({ active }: TapbarProps) {
           <button
             key={key}
             type="button"
-            // ponytail: Course tab has no route yet (href: null), wire up when /course exists
-            disabled={!href}
             aria-current={selected ? "page" : undefined}
-            onClick={() => href && router.push(href)}
+            onClick={() => router.push(href)}
             className="flex flex-1 flex-col items-center justify-center gap-0.5"
           >
             <Icon className={`size-6 ${color}`} />
