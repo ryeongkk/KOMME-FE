@@ -15,11 +15,46 @@ export function CourseCreateScreen() {
   const [location, setLocation] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const selectLocation = (name: string) => {
     setLocation(name);
     setSearching(false);
     setQuery("");
+  };
+
+  const useCurrentLocation = () => {
+    if (!("geolocation" in navigator)) {
+      setLocationError("Geolocation isn't supported on this device.");
+      return;
+    }
+    setLocationError(null);
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(`/api/reverse-geocode?lat=${latitude}&lng=${longitude}`);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error ?? "Couldn't determine your location");
+          selectLocation(data.location);
+        } catch {
+          setLocationError("Couldn't determine your location. Please search instead.");
+        } finally {
+          setLocating(false);
+        }
+      },
+      (error) => {
+        setLocationError(
+          error.code === error.PERMISSION_DENIED
+            ? "Location permission denied. Please search instead."
+            : "Couldn't determine your location. Please search instead.",
+        );
+        setLocating(false);
+      },
+      { timeout: 10_000 },
+    );
   };
 
   if (searching) {
@@ -70,12 +105,16 @@ export function CourseCreateScreen() {
 
         <button
           type="button"
-          onClick={() => selectLocation("Current Location")}
-          className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-lg bg-secondary-100 p-4"
+          onClick={useCurrentLocation}
+          disabled={locating}
+          className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-lg bg-secondary-100 p-4 disabled:opacity-60"
         >
           <PositionIcon className="size-6 text-secondary-300" />
-          <span className="text-body-m-14 text-secondary-300">Use current location</span>
+          <span className="text-body-m-14 text-secondary-300">
+            {locating ? "Finding your location…" : "Use current location"}
+          </span>
         </button>
+        {locationError && <p className="text-caption-m-12 text-negative">{locationError}</p>}
       </div>
 
       {/* ponytail: no step 2 route yet, wire up onClick when it exists */}
