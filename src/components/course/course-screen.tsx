@@ -101,14 +101,13 @@ export function CourseScreen() {
       </div>
 
       <div className="fixed inset-x-0 bottom-[76px] z-10 mx-auto flex max-w-sm justify-end px-4">
-        {/* ponytail: no /course/create route yet, wire up onClick when it exists */}
-        <button
-          type="button"
+        <Link
+          href="/course/create"
           aria-label="Create course"
           className="flex size-[52px] items-center justify-center rounded-full bg-gray-700 p-2.5"
         >
           <PlusIcon className="size-7 text-white" />
-        </button>
+        </Link>
       </div>
 
       <Tapbar active="course" />
