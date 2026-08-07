@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 type BottomSheetProps = {
   id: string;
-  title: string;
+  title?: string;
   children: ReactNode;
 };
 
@@ -16,9 +16,11 @@ export function BottomSheet({ id, title, children }: BottomSheetProps) {
       <div className="flex w-full items-center justify-center">
         <div className="h-1 w-[30px] rounded-full bg-gray-200" />
       </div>
-      <p className="flex w-full items-center justify-center text-body-sb-14 text-black">
-        {title}
-      </p>
+      {title && (
+        <p className="flex w-full items-center justify-center text-body-sb-14 text-black">
+          {title}
+        </p>
+      )}
       {children}
     </div>
   );
