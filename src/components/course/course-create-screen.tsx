@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowLeftIcon, CircleXIcon, PositionIcon, SearchIcon } from "@/components/icons";
 import { POPULAR_SPOTS, searchPlaces } from "./create-data";
 
@@ -17,6 +17,7 @@ export function CourseCreateScreen() {
   const [query, setQuery] = useState("");
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const pendingErrorRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectLocation = (name: string) => {
     setLocation(name);
@@ -24,21 +25,33 @@ export function CourseCreateScreen() {
     setQuery("");
   };
 
+  // ponytail: some browser extensions (privacy/anti-fingerprinting ones) patch
+  // getCurrentPosition and fire a spurious PERMISSION_DENIED synchronously before
+  // letting the real request through a few ms later — confirmed via instrumentation,
+  // the "error" and the real success shared the same request, ~6ms apart. Rather than
+  // flash that noise, hold the error behind a short grace window and let a fast
+  // success cancel it before it's ever shown.
   const useCurrentLocation = () => {
     if (!("geolocation" in navigator)) {
       setLocationError("Geolocation isn't supported on this device.");
       return;
     }
+    if (pendingErrorRef.current) clearTimeout(pendingErrorRef.current);
     setLocationError(null);
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        if (pendingErrorRef.current) {
+          clearTimeout(pendingErrorRef.current);
+          pendingErrorRef.current = null;
+        }
         try {
           const { latitude, longitude } = position.coords;
           const res = await fetch(`/api/reverse-geocode?lat=${latitude}&lng=${longitude}`);
           const data = await res.json();
           if (!res.ok) throw new Error(data.error ?? "Couldn't determine your location");
           selectLocation(data.location);
+          setLocationError(null);
         } catch {
           setLocationError("Couldn't determine your location. Please search instead.");
         } finally {
@@ -46,14 +59,17 @@ export function CourseCreateScreen() {
         }
       },
       (error) => {
-        setLocationError(
-          error.code === error.PERMISSION_DENIED
-            ? "Location permission denied. Please search instead."
-            : "Couldn't determine your location. Please search instead.",
-        );
-        setLocating(false);
+        pendingErrorRef.current = setTimeout(() => {
+          setLocationError(
+            error.code === error.PERMISSION_DENIED
+              ? "Location permission denied. Please search instead."
+              : "Couldn't determine your location. Please search instead.",
+          );
+          setLocating(false);
+          pendingErrorRef.current = null;
+        }, 300);
       },
-      { timeout: 10_000 },
+      { timeout: 20_000 },
     );
   };
 
