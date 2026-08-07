@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarIcon, LocationIcon, PlusIcon } from "@/components/icons";
 import { type Schedule, ScheduleCard } from "@/components/ui/schedule-card";
 import { Tapbar } from "@/components/ui/tapbar";
@@ -18,7 +19,7 @@ type HistoryCourse = {
 // ponytail: no course API yet, static stub list (same shape as home-screen's
 // UPCOMING_SCHEDULE). Empty array renders the empty state (Figma node 354:7845);
 // populate it to preview the list state (node 137:1121).
-const UPCOMING_COURSES: (Schedule & { id: string })[] = [
+const UPCOMING_COURSES: Schedule[] = [
   { id: "1", dDay: "D-DAY", title: "Hongdae Spa Day", date: "2026-07-28", spots: 3 },
   { id: "2", dDay: "D-2", title: "Hongdae Spa Day", date: "2026-07-29", spots: 3 },
   { id: "3", dDay: "D-3", title: "Hongdae Spa Day", date: "2026-07-30", spots: 3 },
@@ -33,7 +34,17 @@ const HISTORY_COURSES: HistoryCourse[] = [
 ];
 
 export function CourseScreen() {
-  const [tab, setTab] = useState<Tab>("Upcoming");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tab: Tab = searchParams.get("tab") === "history" ? "History" : "Upcoming";
+
+  // Tab state lives in the URL (not useState) so that navigating to a course
+  // detail page and back restores whichever tab was active — router.back()
+  // returns to this exact URL, replace() keeps switching tabs out of the
+  // back-stack.
+  const setTab = (t: Tab) => {
+    router.replace(t === "History" ? "/course?tab=history" : "/course", { scroll: false });
+  };
 
   return (
     <>
@@ -131,13 +142,12 @@ function HistoryCard({ course }: { course: HistoryCourse }) {
           </div>
         </div>
       </div>
-      {/* ponytail: no /course/[id] route yet, static button — wire up onClick when it exists */}
-      <button
-        type="button"
+      <Link
+        href={`/course/${course.id}`}
         className="flex h-10 w-full items-center justify-center rounded-lg bg-secondary-100 text-body-m-14 text-secondary-300"
       >
         View Course
-      </button>
+      </Link>
     </div>
   );
 }

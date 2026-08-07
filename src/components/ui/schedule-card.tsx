@@ -1,14 +1,16 @@
+import Link from "next/link";
 import { CalendarIcon, LocationIcon } from "@/components/icons";
 
 export type Schedule = {
+  id: string;
   dDay: string;
   title: string;
   date: string;
   spots: number;
 };
 
-// ponytail: Edit Schedule / View Course have no destinations yet (no /course/[id] or
-// /course/[id]/edit routes), so they're static buttons — wire up onClick when those exist.
+// ponytail: Edit Schedule has no destination yet (no /course/[id]/edit route),
+// so it's a static button — wire up onClick when that route exists.
 export function ScheduleCard({ schedule }: { schedule: Schedule }) {
   return (
     <div className="flex w-full flex-col items-center gap-2 rounded-[10px] border border-gray-200 px-4 py-5">
@@ -36,12 +38,12 @@ export function ScheduleCard({ schedule }: { schedule: Schedule }) {
         >
           Edit Schedule
         </button>
-        <button
-          type="button"
+        <Link
+          href={`/course/${schedule.id}`}
           className="flex h-10 w-[151px] items-center justify-center rounded-lg bg-secondary-100 text-body-m-14 text-secondary-300"
         >
           View Course
-        </button>
+        </Link>
       </div>
     </div>
   );
