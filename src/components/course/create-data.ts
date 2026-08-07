@@ -3,6 +3,13 @@ export const POPULAR_SPOTS: Record<"Seoul" | "Busan", string[]> = {
   Busan: ["Haeundae", "Gwangalli", "Seomyeon", "Yeongdo"],
 };
 
+// Figma nodes 352:7394 / 352:7460 — step 2 of Create Course (select topics).
+export const TOPICS = ["Food", "Healing", "Exploration"] as const;
+
+// Figma nodes 352:7529 / 354:8127 / 357:8751 — step 3 of Create Course
+// (spot count + visit date; the date bottom sheet itself is ui/visit-date-picker.tsx).
+export const SPOT_COUNTS = ["2 spots", "3 spots", "4+ spots"] as const;
+
 // ponytail: no district-search API yet; static list mirrors the Figma search mock (the
 // "Seong" query demo, node 340:4584) plus the popular spots so typing has something to
 // filter. Real source: Seoul/Busan administrative districts, sorted abc, capped at 6.
