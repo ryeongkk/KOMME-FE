@@ -11,11 +11,13 @@ export function SpotsStep({
   onSelectSpotCount,
   visitDate,
   onVisitDateChange,
+  onNext,
 }: {
   spotCount: SpotCount | null;
   onSelectSpotCount: (count: SpotCount) => void;
   visitDate: Date | null;
   onVisitDateChange: (date: Date) => void;
+  onNext: () => void;
 }) {
   return (
     <>
@@ -55,10 +57,10 @@ export function SpotsStep({
         )}
       </div>
 
-      {/* ponytail: no route past step 3 yet, wire up onClick when it exists */}
       <button
         type="button"
         disabled={!spotCount || !visitDate}
+        onClick={onNext}
         className={`mt-auto flex h-[52px] w-full items-center justify-center rounded-lg text-body-m-14 ${
           spotCount && visitDate ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
         }`}

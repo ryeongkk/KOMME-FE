@@ -143,6 +143,7 @@ export function CourseCreateScreen() {
           onSelectSpotCount={setSpotCount}
           visitDate={visitDate}
           onVisitDateChange={setVisitDate}
+          onNext={() => router.push("/course/create/complete")}
         />
       )}
     </>
