@@ -1,25 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { ArrowLeftIcon, MapIcon, SaveLgIcon } from "@/components/icons";
-import { SPOTS, type Spot } from "@/components/spots/data";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { SpotCard } from "@/components/ui/spot-card";
-
-type CourseStop = {
-  spot: Spot;
-  distanceToNextKm: number | null;
-};
-
-// ponytail: no course API yet, static stub — reuses the same spot 3x to match the Figma
-// mock (same shape/values as course-detail-screen.tsx's stub; kept separate rather than
-// shared since the two screens' data needs may diverge once a real course API exists).
-const COURSE_STOPS: CourseStop[] = [
-  { spot: SPOTS[0], distanceToNextKm: 1.4 },
-  { spot: SPOTS[0], distanceToNextKm: 2.8 },
-  { spot: SPOTS[0], distanceToNextKm: null },
-];
+import { COURSE_STOPS } from "./create-data";
 
 // Shared shape for this screen's two confirm dialogs (leave / regenerate) — same
 // popover markup as course-detail-screen.tsx's delete dialog, just parameterized since
@@ -75,8 +62,8 @@ function ConfirmDialog({
 // Course tab. The bottom "Try Again" button (node 357:9479) opens a "Regenerate this
 // course?" confirm dialog (node 390:14119); confirming routes to /course/create to redo
 // the wizard from step 1. Both confirms use router.replace so this screen doesn't linger
-// in history. The header's map icon has no API behind it yet (ponytail, same reasoning as
-// course-detail-screen.tsx's unwired map icon).
+// in history. The header's map icon opens course-route-map.tsx (Figma node 357:8859),
+// which so far just drops a numbered pin on the first stop.
 export function CreatedCourseScreen() {
   const router = useRouter();
   const sheetId = useId();
@@ -91,9 +78,9 @@ export function CreatedCourseScreen() {
         </button>
         <p className="text-body-sb-16 text-black">Created Course</p>
         <div className="flex items-center gap-2.5">
-          <button type="button" aria-label="View on map" className="text-black">
+          <Link href="/course/create/complete/map" aria-label="View on map" className="text-black">
             <MapIcon className="size-6" />
-          </button>
+          </Link>
           <button type="button" aria-label="Save course" popoverTarget={sheetId} className="text-black">
             <SaveLgIcon className="size-6" />
           </button>

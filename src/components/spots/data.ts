@@ -19,9 +19,13 @@ export type Spot = {
   address: string;
   phone: string;
   topic: Topic;
+  lat: number;
+  lng: number;
 };
 
-// ponytail: no spot API yet, static data mirrors the Figma mock (3 spots, listed twice)
+// ponytail: no spot API yet, static data mirrors the Figma mock (3 spots, listed twice).
+// lat/lng are hand-looked-up (approximate center of each address), not geocoded live —
+// swap for real values once a spot API exists.
 export const SPOTS: Spot[] = [
   {
     id: "park-spa-land",
@@ -33,6 +37,8 @@ export const SPOTS: Spot[] = [
     address: "The Park 365, 50 Seonyudong 1-ro, Yeongdeungpo-gu, Seoul",
     phone: "010-1111-3333",
     topic: "Korean Spa/Sauna",
+    lat: 37.5385,
+    lng: 126.8987,
   },
   {
     id: "moclock-gangnam",
@@ -44,6 +50,8 @@ export const SPOTS: Spot[] = [
     address: "123 Teheran-ro, Gangnam-gu, Seoul",
     phone: "010-2222-4444",
     topic: "Korean Spa/Sauna",
+    lat: 37.5006,
+    lng: 127.0364,
   },
   {
     id: "sparex-dongdaemun",
@@ -55,5 +63,7 @@ export const SPOTS: Spot[] = [
     address: "45 Cheonggyecheon-ro, Dongdaemun-gu, Seoul",
     phone: "010-3333-5555",
     topic: "Korean Spa/Sauna",
+    lat: 37.5701,
+    lng: 127.0107,
   },
 ];

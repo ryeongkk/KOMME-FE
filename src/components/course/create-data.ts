@@ -1,3 +1,5 @@
+import { SPOTS, type Spot } from "@/components/spots/data";
+
 export const POPULAR_SPOTS: Record<"Seoul" | "Busan", string[]> = {
   Seoul: ["Seongsu-dong", "Hongdae", "Seochon", "Jamsil"],
   Busan: ["Haeundae", "Gwangalli", "Seomyeon", "Yeongdo"],
@@ -99,3 +101,18 @@ export function translateDistrict(cityKo: string, guKo: string): string | null {
   }
   return null;
 }
+
+export type CourseStop = {
+  spot: Spot;
+  distanceToNextKm: number | null;
+};
+
+// ponytail: no course API yet, static stub — reuses the same spot 3x to match the Figma
+// mock. Shared by created-course-screen.tsx and course-route-map.tsx (both need the same
+// stop order/coordinates); course-detail-screen.tsx keeps its own copy since that's a
+// different screen and may diverge once a real course API exists.
+export const COURSE_STOPS: CourseStop[] = [
+  { spot: SPOTS[0], distanceToNextKm: 1.4 },
+  { spot: SPOTS[0], distanceToNextKm: 2.8 },
+  { spot: SPOTS[0], distanceToNextKm: null },
+];
