@@ -10,8 +10,14 @@ declare namespace naver.maps {
     constructor(x: number, y: number);
   }
 
+  class LatLngBounds {
+    constructor(sw: LatLng, ne: LatLng);
+    extend(latlng: LatLng): void;
+  }
+
   class Map {
     constructor(element: HTMLElement, options?: { center?: LatLng; zoom?: number });
+    fitBounds(bounds: LatLngBounds, margin?: number): void;
   }
 
   class Marker {
@@ -19,6 +25,16 @@ declare namespace naver.maps {
       position: LatLng;
       map?: Map;
       icon?: { content: string; anchor?: Point };
+    });
+  }
+
+  class Polyline {
+    constructor(options: {
+      path: LatLng[];
+      map?: Map;
+      strokeColor?: string;
+      strokeWeight?: number;
+      strokeOpacity?: number;
     });
   }
 }
