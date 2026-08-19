@@ -1,10 +1,26 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon } from "@/components/icons";
+import { logout } from "@/lib/api/auth";
+import { clearAuthTokens, getRefreshToken } from "@/lib/auth-tokens";
 
 export function MyAccountScreen() {
   const router = useRouter();
+
+  const logoutMutation = useMutation({
+    mutationFn: () => {
+      const refreshToken = getRefreshToken();
+      return refreshToken ? logout(refreshToken) : Promise.resolve();
+    },
+    // Log out locally either way — a stale/expired token means the server already
+    // considers the session gone, so there's nothing left to "fail" the user's intent.
+    onSettled: () => {
+      clearAuthTokens();
+      router.push("/login");
+    },
+  });
 
   return (
     <>
@@ -40,7 +56,6 @@ export function MyAccountScreen() {
         </button>
       </div>
 
-      {/* ponytail: no auth session to clear yet, confirming just returns to the login screen */}
       <div
         id="logout-dialog"
         popover="auto"
@@ -63,10 +78,11 @@ export function MyAccountScreen() {
           </button>
           <button
             type="button"
-            onClick={() => router.push("/login")}
+            disabled={logoutMutation.isPending}
+            onClick={() => logoutMutation.mutate()}
             className="h-10 w-[129px] rounded-lg bg-gray-900 text-body-m-14 text-white"
           >
-            Log out
+            {logoutMutation.isPending ? "Logging out…" : "Log out"}
           </button>
         </div>
       </div>
