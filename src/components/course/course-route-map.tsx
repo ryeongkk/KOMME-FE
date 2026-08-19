@@ -109,9 +109,9 @@ function SpotInfoSheet({ label, spot }: { label: string; spot: Spot }) {
 // component, secondary-300) + a driving route between them (NCP Direction 15), so far
 // just stops 1→2. Tapping a pin opens its Place Info sheet (node 358:9505) via the native
 // popover API — the pin's HTML content is a real <button popovertarget>, so this needs no
-// JS click-listener wiring through the Maps SDK. No back button in the Figma mock, but a
-// bare full-bleed map with no way out is a real trap, so one's added here (ponytail:
-// floating over the map since there's no header chrome).
+// JS click-listener wiring through the Maps SDK. Header is a plain white bar with just the
+// back arrow (same node), pt-safe-area since this screen is `fixed` and skips the normal
+// document-flow safe-area handling every other screen gets for free.
 // ponytail: Direction 15 is a car route, not a walking one — Naver has no public
 // pedestrian-directions API, so this is a stand-in for what's really a walking course.
 // Falls back to a straight line if the Directions call fails for any reason.
@@ -143,7 +143,10 @@ export function CourseRouteMap() {
       const { maps } = window.naver;
       const startLatLng = new maps.LatLng(start.lat, start.lng);
       const secondLatLng = new maps.LatLng(second.lat, second.lng);
-      const map = new maps.Map(container, { center: startLatLng, zoom: 16 });
+      // No center/zoom here — fitBounds (right below) sets both as soon as marker
+      // positions are known, so the map never has to visibly jump from a spot-1-only
+      // view to the fitted one once the (async) route arrives.
+      const map = new maps.Map(container);
 
       const addNumberedMarker = (position: naver.maps.LatLng, label: string) =>
         new maps.Marker({
@@ -157,6 +160,10 @@ export function CourseRouteMap() {
       addNumberedMarker(startLatLng, "1");
       addNumberedMarker(secondLatLng, "2");
 
+      const bounds = new maps.LatLngBounds(startLatLng, startLatLng);
+      bounds.extend(secondLatLng);
+      map.fitBounds(bounds, 40);
+
       const drivingPath = await fetchDrivingPath(start, second);
       if (cancelled) return;
       const path = drivingPath
@@ -168,10 +175,6 @@ export function CourseRouteMap() {
         strokeColor: "#11DDE4", // secondary-300
         strokeWeight: 4,
       });
-
-      const bounds = new maps.LatLngBounds(startLatLng, startLatLng);
-      bounds.extend(secondLatLng);
-      map.fitBounds(bounds, 40);
     }
 
     render(clientId, container);
@@ -182,16 +185,13 @@ export function CourseRouteMap() {
   }, [start, second]);
 
   return (
-    <div className="fixed inset-x-0 top-0 mx-auto h-dvh w-full max-w-sm">
-      <div ref={mapRef} className="h-full w-full" />
-      <button
-        type="button"
-        aria-label="Back"
-        onClick={() => router.back()}
-        className="absolute top-4 left-4 flex size-10 items-center justify-center rounded-full bg-white text-black shadow-md"
-      >
-        <ArrowLeftIcon className="size-6" />
-      </button>
+    <div className="fixed inset-x-0 top-0 mx-auto flex h-dvh w-full max-w-sm flex-col">
+      <div className="flex w-full items-center bg-white px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
+        <button type="button" aria-label="Back" onClick={() => router.back()} className="text-black">
+          <ArrowLeftIcon className="size-6" />
+        </button>
+      </div>
+      <div ref={mapRef} className="w-full flex-1" />
       {stops.map(({ label, spot }) => (
         <SpotInfoSheet key={label} label={label} spot={spot} />
       ))}
