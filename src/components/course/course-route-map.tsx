@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { ArrowLeftIcon } from "@/components/icons";
-import { SPOTS } from "@/components/spots/data";
+import { ArrowLeftIcon, ClockIcon, LocationIcon, PhoneIcon, SaveSmIcon } from "@/components/icons";
+import { SPOTS, type Spot } from "@/components/spots/data";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { COURSE_STOPS } from "./create-data";
 
 const SCRIPT_ID = "naver-maps-sdk";
@@ -45,11 +47,71 @@ async function fetchDrivingPath(
   }
 }
 
+function spotSheetId(label: string) {
+  return `spot-sheet-${label}`;
+}
+
+// Figma node 358:9505 ("핀 클릭 시") — tapping a numbered pin opens this "Place Info"
+// sheet. Content mirrors spots/spot-detail-screen.tsx (same data, same "Open in Naver
+// Map" link) but laid out for a sheet instead of a full page — not extracted into a
+// shared component since the two diverge enough (full-page chrome vs. sheet chrome) that
+// sharing would just be indirection for ~20 lines of markup; revisit if a third usage
+// shows up.
+function SpotInfoSheet({ label, spot }: { label: string; spot: Spot }) {
+  return (
+    <BottomSheet id={spotSheetId(label)} title="Place Info">
+      {/* ponytail: no photo API yet, swap for real photos when it exists */}
+      <div className="aspect-square w-full bg-gray-100" />
+      <div className="flex w-full flex-col gap-4 px-4 py-4">
+        <div className="flex w-full flex-col gap-1">
+          <p className="text-caption-m-12 text-gray-500">{spot.region}</p>
+          <p className="text-body-sb-16 text-black">{spot.name}</p>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
+              <SaveSmIcon className="size-5 text-secondary-300" />
+              <p className="text-body-m-14 text-gray-500">{spot.saves}</p>
+            </div>
+            <span className="text-body-m-14 text-gray-500">|</span>
+            <p className="text-body-m-14 text-gray-500">{spot.distanceKm}km</p>
+          </div>
+        </div>
+        <div className="flex w-full flex-col gap-2">
+          <div className="flex w-full items-start gap-2">
+            <LocationIcon className="size-5 shrink-0 text-gray-700" />
+            <p className="flex-1 text-body-m-14 text-black">{spot.address}</p>
+          </div>
+          <div className="flex w-full items-center gap-2">
+            <PhoneIcon className="size-5 shrink-0 text-gray-700" />
+            <p className="flex-1 text-body-m-14 text-black">{spot.phone}</p>
+          </div>
+          <div className="flex w-full items-center gap-2">
+            <ClockIcon className="size-5 shrink-0 text-gray-700" />
+            <p className="flex-1 text-body-m-14 text-black">{spot.hours}</p>
+          </div>
+        </div>
+      </div>
+      <div className="flex w-full flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+        <a
+          href={`https://map.naver.com/p/search/${encodeURIComponent(spot.name)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-[53px] w-full items-center justify-center gap-2.5 rounded-lg border border-gray-100 p-4 text-body-m-14 text-gray-500"
+        >
+          <Image src="/icons/naver-map.png" alt="" width={24} height={24} />
+          Open in Naver Map
+        </a>
+      </div>
+    </BottomSheet>
+  );
+}
+
 // Figma node 357:8859 ("지도로 보기") — numbered pins (matching the cyan "numbering"
 // component, secondary-300) + a driving route between them (NCP Direction 15), so far
-// just stops 1→2. No back button in the Figma mock, but a bare full-bleed map with no way
-// out is a real trap, so one's added here (ponytail: floating over the map since there's
-// no header chrome).
+// just stops 1→2. Tapping a pin opens its Place Info sheet (node 358:9505) via the native
+// popover API — the pin's HTML content is a real <button popovertarget>, so this needs no
+// JS click-listener wiring through the Maps SDK. No back button in the Figma mock, but a
+// bare full-bleed map with no way out is a real trap, so one's added here (ponytail:
+// floating over the map since there's no header chrome).
 // ponytail: Direction 15 is a car route, not a walking one — Naver has no public
 // pedestrian-directions API, so this is a stand-in for what's really a walking course.
 // Falls back to a straight line if the Directions call fails for any reason.
@@ -57,18 +119,23 @@ export function CourseRouteMap() {
   const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
 
+  const start = COURSE_STOPS[0].spot;
+  // ponytail: COURSE_STOPS repeats the same stub spot 3x (see create-data.ts), so
+  // there's no real second stop yet — SPOTS[1] stands in as an arbitrary second point to
+  // test multi-marker + route rendering. Swap to COURSE_STOPS[1].spot once that stub has
+  // distinct stops.
+  const second = SPOTS[1];
+  const stops = [
+    { label: "1", spot: start },
+    { label: "2", spot: second },
+  ];
+
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID;
     const container = mapRef.current;
     if (!clientId || !container) return;
 
     let cancelled = false;
-    const start = COURSE_STOPS[0].spot;
-    // ponytail: COURSE_STOPS repeats the same stub spot 3x (see create-data.ts), so
-    // there's no real second stop yet — SPOTS[1] stands in as an arbitrary second point
-    // to test multi-marker + route rendering. Swap to COURSE_STOPS[1].spot once that
-    // stub has distinct stops.
-    const second = SPOTS[1];
 
     async function render(clientId: string, container: HTMLElement) {
       await loadNaverMapsScript(clientId);
@@ -83,7 +150,7 @@ export function CourseRouteMap() {
           position,
           map,
           icon: {
-            content: `<div class="flex size-7 items-center justify-center rounded-full bg-secondary-300 text-body-sb-16 text-white">${label}</div>`,
+            content: `<button type="button" popovertarget="${spotSheetId(label)}" class="flex size-7 items-center justify-center rounded-full bg-secondary-300 text-body-sb-16 text-white">${label}</button>`,
             anchor: new maps.Point(14, 14),
           },
         });
@@ -112,14 +179,22 @@ export function CourseRouteMap() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [start, second]);
 
   return (
     <div className="fixed inset-x-0 top-0 mx-auto h-dvh w-full max-w-sm">
       <div ref={mapRef} className="h-full w-full" />
-      <button type="button" aria-label="Back" onClick={() => router.back()} className="absolute top-4 left-4 flex size-10 items-center justify-center rounded-full bg-white text-black shadow-md">
+      <button
+        type="button"
+        aria-label="Back"
+        onClick={() => router.back()}
+        className="absolute top-4 left-4 flex size-10 items-center justify-center rounded-full bg-white text-black shadow-md"
+      >
         <ArrowLeftIcon className="size-6" />
       </button>
+      {stops.map(({ label, spot }) => (
+        <SpotInfoSheet key={label} label={label} spot={spot} />
+      ))}
     </div>
   );
 }
