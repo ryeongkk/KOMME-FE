@@ -1,4 +1,8 @@
+"use client";
+
 import { EmailScreen } from "@/components/login/email-screen";
+import { sendPasswordResetVerification } from "@/lib/api/auth";
+import { savePasswordResetDraft } from "@/lib/password-reset-draft";
 
 export default function ResetEmailPage() {
   return (
@@ -7,6 +11,10 @@ export default function ResetEmailPage() {
         headerTitle="Reset Password"
         heading="Enter your email address to reset the password"
         nextPath="/login/reset/code"
+        onSubmit={async (email) => {
+          await sendPasswordResetVerification(email);
+          savePasswordResetDraft({ email });
+        }}
       />
     </main>
   );

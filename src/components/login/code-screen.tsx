@@ -1,15 +1,14 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
+import { authErrorMessage } from "@/lib/api/auth-error-messages";
 
 const CODE_LENGTH = 6;
 const TIMER_SECONDS = 180;
 const TOAST_DURATION_MS = 2500;
-// ponytail: correct-code check is a client-side stand-in for the real verify-code API,
-// which doesn't exist yet. Swap this out once the backend endpoint is available.
-const CORRECT_CODE = "123456";
 
 function formatTime(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60)
@@ -23,20 +22,33 @@ type CodeScreenProps = {
   headerTitle: string;
   /** Route to continue to once the code is verified. */
   nextPath: string;
+  /** Signup confirms an email-verification code, reset confirms a password-reset code — decided by the route's page.tsx. */
+  onConfirm: (email: string, code: string) => Promise<void>;
+  /** Re-sends the same kind of code this screen is confirming. */
+  onResend: (email: string) => Promise<void>;
 };
 
-export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
+export function CodeScreen({ headerTitle, nextPath, onConfirm, onResend }: CodeScreenProps) {
   const router = useRouter();
   const email = useSearchParams().get("email") ?? "";
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [secondsLeft, setSecondsLeft] = useState(TIMER_SECONDS);
-  const [incorrect, setIncorrect] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   const isComplete = digits.every((digit) => digit.length === 1);
   const isExpired = secondsLeft <= 0;
-  const canSubmit = isComplete && !incorrect && !isExpired;
+
+  const confirmMutation = useMutation({
+    mutationFn: (code: string) => onConfirm(email, code),
+    onSuccess: () => router.push(nextPath),
+    onError: () => setShowToast(true),
+  });
+  const resendMutation = useMutation({ mutationFn: () => onResend(email) });
+
+  const canSubmit = isComplete && !isExpired && !confirmMutation.isPending;
+  const incorrect = confirmMutation.isError;
+  const errorMessage = incorrect ? authErrorMessage(confirmMutation.error, "The verification code is incorrect.") : null;
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -57,7 +69,7 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
       next[index] = digit;
       return next;
     });
-    setIncorrect(false);
+    confirmMutation.reset();
     if (digit && index < CODE_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -70,21 +82,20 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
   };
 
   const handleResend = () => {
-    setSecondsLeft(TIMER_SECONDS);
-    setDigits(Array(CODE_LENGTH).fill(""));
-    setIncorrect(false);
-    inputRefs.current[0]?.focus();
-    // TODO: call the resend verification code API once it exists
+    if (resendMutation.isPending) return;
+    resendMutation.mutate(undefined, {
+      onSuccess: () => {
+        setSecondsLeft(TIMER_SECONDS);
+        setDigits(Array(CODE_LENGTH).fill(""));
+        confirmMutation.reset();
+        inputRefs.current[0]?.focus();
+      },
+    });
   };
 
   const handleNext = () => {
-    if (!isComplete || isExpired) return;
-    if (digits.join("") !== CORRECT_CODE) {
-      setIncorrect(true);
-      setShowToast(true);
-      return;
-    }
-    router.push(nextPath);
+    if (!canSubmit) return;
+    confirmMutation.mutate(digits.join(""));
   };
 
   return (
@@ -136,9 +147,10 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
               <button
                 type="button"
                 onClick={handleResend}
+                disabled={resendMutation.isPending}
                 className="border-b border-gray-500 text-caption-sb-12 text-gray-500"
               >
-                Resend code
+                {resendMutation.isPending ? "Resending…" : "Resend code"}
               </button>
             </div>
           </div>
@@ -146,7 +158,7 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
       </div>
 
       <div className="relative mt-auto w-full">
-        {incorrect && (
+        {errorMessage && (
           <div
             role="alert"
             className={`absolute bottom-full left-1/2 mb-5 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-xl bg-gray-700 px-4 py-3 transition-all duration-300 ${
@@ -154,7 +166,7 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
             }`}
           >
             <WarningIcon className="size-[18px] shrink-0 text-secondary-200" />
-            <p className="text-body-m-14 text-white">The verification code is incorrect.</p>
+            <p className="text-body-m-14 text-white">{errorMessage}</p>
           </div>
         )}
 
@@ -166,7 +178,7 @@ export function CodeScreen({ headerTitle, nextPath }: CodeScreenProps) {
             canSubmit ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
           }`}
         >
-          Next
+          {confirmMutation.isPending ? "Verifying…" : "Next"}
         </button>
       </div>
     </>

@@ -1,26 +1,47 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
+import { authErrorMessage } from "@/lib/api/auth-error-messages";
 import { TextField } from "@/components/ui/text-field";
 
 const NICKNAME_PATTERN = /^[a-zA-Z0-9]{2,20}$/;
-// ponytail: reserved-word check is a client-side stand-in for the real duplicate-check API,
-// which doesn't exist yet. Swap this out once the backend endpoint is available.
+// ponytail: reserved-word check is a client-side stand-in for the real duplicate-check API
+// (User domain, GET /users/nicknames/availability — out of scope for this Auth-domain pass).
+// signup() below still catches a real duplicate via AUTH_409_2 as a second layer.
 const RESERVED_NICKNAMES = ["admin"];
 const TOAST_DURATION_MS = 2500;
 
-export function NicknameScreen() {
+type NicknameScreenProps = {
+  /** Reads the rest of the signup draft (email/password) and calls signup(). */
+  onSubmit: (nickname: string) => Promise<void>;
+};
+
+export function NicknameScreen({ onSubmit }: NicknameScreenProps) {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
   const [touched, setTouched] = useState(false);
-  const [isDuplicate, setIsDuplicate] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   const isValidFormat = NICKNAME_PATTERN.test(nickname);
   const hasFormatError = touched && nickname.length > 0 && !isValidFormat;
-  const canStart = isValidFormat && !isDuplicate;
+  const isReserved = RESERVED_NICKNAMES.includes(nickname.toLowerCase());
+
+  const signupMutation = useMutation({
+    mutationFn: () => onSubmit(nickname),
+    onSuccess: () => router.push("/login"),
+    onError: () => setShowToast(true),
+  });
+
+  const canStart = isValidFormat && !isReserved && !signupMutation.isPending;
+  const isDuplicate = isReserved || signupMutation.isError;
+  const toastMessage = isReserved
+    ? "This nickname is already in use."
+    : signupMutation.isError
+      ? authErrorMessage(signupMutation.error, "Couldn't create your account. Please try again.")
+      : null;
 
   useEffect(() => {
     if (!showToast) return;
@@ -30,17 +51,16 @@ export function NicknameScreen() {
 
   const handleChange = (value: string) => {
     setNickname(value);
-    setIsDuplicate(false);
+    signupMutation.reset();
   };
 
   const handleStart = () => {
-    if (!isValidFormat) return;
-    if (RESERVED_NICKNAMES.includes(nickname.toLowerCase())) {
-      setIsDuplicate(true);
+    if (!canStart) return;
+    if (isReserved) {
       setShowToast(true);
       return;
     }
-    // TODO: navigate to the sign-up completion screen once that route exists
+    signupMutation.mutate();
   };
 
   return (
@@ -65,7 +85,7 @@ export function NicknameScreen() {
             hasFormatError
               ? "Please use 2–20 characters, letters and numbers only."
               : isDuplicate
-                ? "This nickname is already in use."
+                ? toastMessage ?? undefined
                 : undefined
           }
           helperText="Please use 2–20 characters, letters and numbers only."
@@ -73,7 +93,7 @@ export function NicknameScreen() {
       </div>
 
       <div className="relative mt-auto w-full">
-        {isDuplicate && (
+        {toastMessage && (
           <div
             role="alert"
             className={`absolute bottom-full left-1/2 mb-5 flex w-[301px] -translate-x-1/2 items-center gap-2 rounded-xl bg-gray-700 px-4 py-3 transition-all duration-300 ${
@@ -81,7 +101,7 @@ export function NicknameScreen() {
             }`}
           >
             <WarningIcon className="size-[18px] shrink-0 text-secondary-200" />
-            <p className="text-body-m-14 text-white">This nickname is already in use.</p>
+            <p className="text-body-m-14 text-white">{toastMessage}</p>
           </div>
         )}
 
@@ -93,7 +113,7 @@ export function NicknameScreen() {
             canStart ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
           }`}
         >
-          Start
+          {signupMutation.isPending ? "Creating account…" : "Start"}
         </button>
       </div>
     </>
