@@ -42,8 +42,11 @@ export function VisitDatePicker({
   onChange: (date: Date) => void;
 }) {
   const sheetId = useId();
-  const [cursor, setCursor] = useState(() => new Date());
-  const [selected, setSelected] = useState(() => new Date());
+  // Deterministic initial value (not `new Date()`) so SSR and client hydration render the
+  // same hidden calendar markup — the trigger's onClick below resets both to the real
+  // "today" the moment the sheet is actually opened, so this initial value is never seen.
+  const [cursor, setCursor] = useState(() => new Date(2000, 0, 1));
+  const [selected, setSelected] = useState(() => new Date(2000, 0, 1));
 
   return (
     <>

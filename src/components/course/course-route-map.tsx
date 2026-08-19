@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeftIcon, ClockIcon, LocationIcon, PhoneIcon, SaveSmIcon } from "@/components/icons";
 import { SPOTS, type Spot } from "@/components/spots/data";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -114,10 +114,15 @@ function SpotInfoSheet({ label, spot }: { label: string; spot: Spot }) {
 // document-flow safe-area handling every other screen gets for free.
 // ponytail: Direction 15 is a car route, not a walking one — Naver has no public
 // pedestrian-directions API, so this is a stand-in for what's really a walking course.
-// Falls back to a straight line if the Directions call fails for any reason.
+// Falls back to a straight line if the Directions call fails for any reason. If the Maps
+// SDK script itself fails to load (network blip, bad client ID), that's not something to
+// silently swallow — shows a "couldn't load the map" overlay with a retry button
+// (retryKey bumps to re-run the effect) instead of leaving a permanently blank map.
 export function CourseRouteMap() {
   const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   const start = COURSE_STOPS[0].spot;
   // ponytail: COURSE_STOPS repeats the same stub spot 3x (see create-data.ts), so
@@ -136,10 +141,20 @@ export function CourseRouteMap() {
     if (!clientId || !container) return;
 
     let cancelled = false;
+    setLoadError(false);
 
     async function render(clientId: string, container: HTMLElement) {
-      await loadNaverMapsScript(clientId);
-      if (cancelled || !window.naver) return;
+      try {
+        await loadNaverMapsScript(clientId);
+      } catch {
+        if (!cancelled) setLoadError(true);
+        return;
+      }
+      if (cancelled) return;
+      if (!window.naver) {
+        setLoadError(true);
+        return;
+      }
       const { maps } = window.naver;
       const startLatLng = new maps.LatLng(start.lat, start.lng);
       const secondLatLng = new maps.LatLng(second.lat, second.lng);
@@ -182,7 +197,7 @@ export function CourseRouteMap() {
     return () => {
       cancelled = true;
     };
-  }, [start, second]);
+  }, [start, second, retryKey]);
 
   return (
     <div className="fixed inset-x-0 top-0 mx-auto flex h-dvh w-full max-w-sm flex-col">
@@ -191,7 +206,21 @@ export function CourseRouteMap() {
           <ArrowLeftIcon className="size-6" />
         </button>
       </div>
-      <div ref={mapRef} className="w-full flex-1" />
+      <div className="relative w-full flex-1">
+        <div ref={mapRef} className="h-full w-full" />
+        {loadError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white px-4 text-center">
+            <p className="text-body-m-14 text-gray-600">Couldn&apos;t load the map. Please try again.</p>
+            <button
+              type="button"
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="rounded-lg bg-gray-900 px-4 py-2.5 text-body-m-14 text-white"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+      </div>
       {stops.map(({ label, spot }) => (
         <SpotInfoSheet key={label} label={label} spot={spot} />
       ))}

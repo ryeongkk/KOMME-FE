@@ -21,18 +21,32 @@ export async function GET(request: NextRequest) {
   naverUrl.searchParams.set("orders", "legalcode");
   naverUrl.searchParams.set("output", "json");
 
-  const res = await fetch(naverUrl, {
-    headers: {
-      "x-ncp-apigw-api-key-id": clientId,
-      "x-ncp-apigw-api-key": clientSecret,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(naverUrl, {
+      headers: {
+        "x-ncp-apigw-api-key-id": clientId,
+        "x-ncp-apigw-api-key": clientSecret,
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (error) {
+    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+    return NextResponse.json({ error: "Reverse geocoding request failed" }, { status: timedOut ? 504 : 502 });
+  }
   if (!res.ok) {
     return NextResponse.json({ error: "Reverse geocoding request failed" }, { status: 502 });
   }
 
-  const data = await res.json();
-  const region = data?.results?.[0]?.region;
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    return NextResponse.json({ error: "Reverse geocoding request failed" }, { status: 502 });
+  }
+
+  const region = (data as { results?: { region?: { area1?: { name?: string }; area2?: { name?: string } } }[] })
+    ?.results?.[0]?.region;
   const cityKo: string | undefined = region?.area1?.name;
   const guKo: string | undefined = region?.area2?.name;
   if (!cityKo || !guKo) {
