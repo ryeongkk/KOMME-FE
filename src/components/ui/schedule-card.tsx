@@ -31,20 +31,12 @@ export function ScheduleCard({ schedule }: { schedule: Schedule }) {
           </div>
         </div>
       </div>
-      <div className="flex gap-[9px]">
-        <button
-          type="button"
-          className="flex h-10 w-[151px] items-center justify-center rounded-lg border border-gray-100 text-body-m-14 text-gray-500"
-        >
-          Edit Schedule
-        </button>
-        <Link
-          href={`/course/${schedule.id}`}
-          className="flex h-10 w-[151px] items-center justify-center rounded-lg bg-secondary-100 text-body-m-14 text-secondary-300"
-        >
-          View Course
-        </Link>
-      </div>
+      <Link
+        href={`/course/${schedule.id}`}
+        className="flex h-10 w-full items-center justify-center rounded-lg bg-secondary-100 text-body-m-14 text-secondary-300"
+      >
+        View Course
+      </Link>
     </div>
   );
 }
