@@ -24,15 +24,20 @@ Figma MCP로 뽑은 값과 기존 디자인 토큰을 근거로 화면을 구현
 
 정말 없을 때만 Figma MCP `get_variable_defs`(색상은 보통 노드 `142:2027`, Color System)로 정확한 값을 뽑아 같은 블록에 추가하고, **나중에 재검증할 수 있도록 노드 ID를 코멘트로 남긴다.** 절대 스크린샷을 보고 눈대중으로 hex 값을 찍지 않는다.
 
-### 4. 아이콘 — 있는 것부터
-필요한 아이콘이 `src/components/icons.tsx`의 기존 25개 중에 있는지 먼저 확인한다 (`import { XIcon } from "@/components/icons"`). 없을 때만 Figma MCP `download_assets`(아이콘 섹션 노드 `157:2536` 근처)로 받아 `src/components/AGENTS.md`에 정리된 절차를 따른다:
-- export에 딸려오는 캔버스 배경 rect, 아트보드 프레임 path(좌표가 음수인 것)는 지우고 `<g id="icon/NAME">` 안쪽만 남긴다.
-- 레이어 `id` 속성 제거, 하드코딩된 색은 `currentColor`로, `fill-rule` 등 속성은 JSX camelCase로 바꾼다.
-- 원본 아이콘 이름을 코멘트로 남긴다.
-- 크기·색은 아이콘 안에 박지 않는다 — 호출부에서 `className="size-6 text-gray-400"` 식으로 준다.
+### 4. 아이콘 — 있는 것부터, 없으면 임시로 때우지 말고 추가부터
+필요한 아이콘이 `src/components/icons.tsx`의 기존 26개 중에 있는지 먼저 확인한다 (`import { XIcon } from "@/components/icons"`).
+
+**없으면 바로 비슷한 기존 아이콘을 회전/재활용하거나 눈대중으로 새로 그리지 않는다.** 먼저 `get_metadata`로 Figma 아이콘 마스터 섹션(노드 `157:2536`)을 훑어 그 이름의 아이콘이 이미 있는지 확인한다:
+- **있으면** Figma MCP `download_assets`로 받아 그 자리에서 `icons.tsx`에 정식으로 추가하고, 하던 화면 작업을 이어간다. `src/components/AGENTS.md`에 정리된 절차를 따른다:
+  - export에 딸려오는 캔버스 배경 rect, 아트보드 프레임 path(좌표가 음수인 것)는 지우고 `<g id="icon/NAME">` 안쪽만 남긴다.
+  - 레이어 `id` 속성 제거, 하드코딩된 색은 `currentColor`로, `fill-rule` 등 속성은 JSX camelCase로 바꾼다.
+  - 원본 아이콘 이름을 코멘트로 남긴다.
+  - 크기·색은 아이콘 안에 박지 않는다 — 호출부에서 `className="size-6 text-gray-400"` 식으로 준다.
+  - `icon/`이 아니라 `img/`로 시작하는 노드(예: `img/navernap`)는 단색 SVG 아이콘이 아니라 래스터 로고다(`svgAssets`가 아니라 `rawImages`로 나옴) — `icons.tsx`에 넣지 않고, 실제로 필요해지면 `public/`에 정적 이미지로 둔다.
+- **정말 없으면**(마스터 섹션에도 없는 글리프일 때만) 그때 기존 아이콘으로 임시 대체하거나 새로 그리는 걸 검토하고, 왜 대체했는지 남긴다.
 - 새 라이브러리 의존성(`lucide-react` 등)을 추가하지 않는다. 이미 그렇게 안 하기로 정한 이유가 있다 (`src/components/AGENTS.md` 참고).
 
-아이콘 라이브러리 없이 인라인으로 버티는 건 지금 규모(25개)에서 합리적인 선택이지, 앞으로도 무조건 그래야 한다는 뜻은 아니다 — 아이콘이 100개를 넘거나 계속 새로 추가돼서 병목이 되면 그때 재판단한다.
+아이콘 라이브러리 없이 인라인으로 버티는 건 지금 규모(26개)에서 합리적인 선택이지, 앞으로도 무조건 그래야 한다는 뜻은 아니다 — 아이콘이 100개를 넘거나 계속 새로 추가돼서 병목이 되면 그때 재판단한다.
 
 ### 5. 컴포넌트 배치
 화면 전용 컴포넌트는 `src/components/<screen>/` 아래 화면 이름을 딴 파일로 만든다 (예: `src/components/onboarding/onboarding-screen.tsx`). 여러 화면이 공유하는 범용 프리미티브만 `src/components/ui/`에 둔다 — 한 화면에서만 쓰는 걸 미리 `ui/`에 넣지 않는다, 두 번째 사용처가 생기면 그때 옮긴다.
