@@ -103,3 +103,47 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* ui/bottom-sheet.tsx's slide-up-from-bottom entrance/exit, shared by every screen that
+   uses it (VisitDatePicker, Save Course, Place Info, ...). Plain CSS instead of Tailwind
+   utilities because animating a native <div popover> needs @starting-style +
+   transition-behavior: allow-discrete, which isn't expressible as a single utility class.
+   Scoped to .bottom-sheet (not every [popover]) so it doesn't touch the centered
+   confirm-dialog popovers elsewhere in the app, which aren't meant to slide. */
+.bottom-sheet {
+  display: none;
+  translate: 0 100%;
+  transition:
+    display 0.3s allow-discrete,
+    overlay 0.3s allow-discrete,
+    translate 0.3s ease-out;
+}
+
+.bottom-sheet:popover-open {
+  display: flex;
+  translate: 0 0;
+}
+
+@starting-style {
+  .bottom-sheet:popover-open {
+    translate: 0 100%;
+  }
+}
+
+.bottom-sheet::backdrop {
+  background-color: rgb(0 0 0 / 0);
+  transition:
+    display 0.3s allow-discrete,
+    overlay 0.3s allow-discrete,
+    background-color 0.3s ease-out;
+}
+
+.bottom-sheet:popover-open::backdrop {
+  background-color: rgb(0 0 0 / 0.3);
+}
+
+@starting-style {
+  .bottom-sheet:popover-open::backdrop {
+    background-color: rgb(0 0 0 / 0);
+  }
+}
