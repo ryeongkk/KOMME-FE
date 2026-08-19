@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Raleway } from "next/font/google";
 import "./globals.css";
+import { EnableMocking } from "./enable-mocking";
+import { QueryProvider } from "./query-provider";
 import { RegisterServiceWorker } from "./register-sw";
 
 const raleway = Raleway({
@@ -36,10 +38,13 @@ export default function RootLayout({
       className={`${raleway.variable} h-full antialiased`}
     >
       <body className="min-h-screen bg-white">
-        <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col bg-white">
-          {children}
-        </div>
+        <QueryProvider>
+          <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col bg-white">
+            {children}
+          </div>
+        </QueryProvider>
         <RegisterServiceWorker />
+        <EnableMocking />
       </body>
     </html>
   );

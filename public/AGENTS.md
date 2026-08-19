@@ -12,6 +12,7 @@
 | 파일 | 설명 |
 |------|------|
 | `sw.js` | 서비스워커: GET 요청에 대해 cache-first, 오프라인 폴백 페이지는 아직 없음. `src/app/register-sw.tsx`가 프로덕션 빌드에서만 등록함. 의도적으로 단순화한 부분에 `ponytail:` 표시가 있으니 확장하기 전에 `/ponytail-debt`로 확인해볼 것 |
+| `mockServiceWorker.js` | `pnpm exec msw init public --save`로 생성된 파일 — 직접 손대지 말 것. msw 버전 올릴 때 재생성. `src/app/enable-mocking.tsx`가 개발 모드에서만 등록함 |
 
 `create-next-app` 스타터 SVG(`file`/`globe`/`window`/`next`/`vercel`)는 전부 삭제했습니다.
 

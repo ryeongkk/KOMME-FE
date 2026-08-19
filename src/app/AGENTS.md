@@ -11,11 +11,13 @@ Next.js App Router 루트입니다: 라우트, 루트 레이아웃, 전역 스�
 
 | 파일              | 설명                                                                                                                                                                                                                               |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `layout.tsx`      | 루트 레이아웃. `next/font/google`로 Raleway를 불러오고, PWA `metadata`/`viewport`를 설정하며, `RegisterServiceWorker`를 마운트함. `children`을 `max-w-sm` 중앙 정렬 컨테이너로 감싸서 데스크톱 너비에서도 항상 모바일 폭으로 렌더링되고 양옆은 흰 여백임 |
+| `layout.tsx`      | 루트 레이아웃. `next/font/google`로 Raleway를 불러오고, PWA `metadata`/`viewport`를 설정하며, `RegisterServiceWorker`/`EnableMocking`을 마운트함. `children`을 `QueryProvider`로 감싼 뒤 `max-w-sm` 중앙 정렬 컨테이너로 감싸서 데스크톱 너비에서도 항상 모바일 폭으로 렌더링되고 양옆은 흰 여백임 |
 | `page.tsx`        | 홈 라우트(`/`) — `src/components/home/home-screen.tsx`를 렌더링만 함 (Figma 노드 `137:1175`/`352:6583`, 하단 탭바 포함, 예정 코스(있음/없음 두 상태)·관심 주제·내 근처 인기 장소 섹션. 장소 이미지는 아직 사진 API가 없어 크기만 맞춘 회색 박스)      |
 | `globals.css`     | Tailwind v4 테마: 색상 토큰(gray 50~900, `primary`, `secondary` 100~400, `negative`)과 11개 타이포그래피 토큰(`text-title-b-20`, `text-body-sb-16` 등). Figma 파일 `mGriQB29mZ6VpIDQDpo5F6`(Color System 노드 `142:2027`)에서 추출. 테마 블록 아래에 `.bottom-sheet` 슬라이드업 애니메이션(`@starting-style` + `transition-behavior: allow-discrete`)도 있음 — `ui/bottom-sheet.tsx`를 쓰는 모든 화면이 공유하는 클래스라 Tailwind 유틸리티 대신 순수 CSS로 둠 |
 | `manifest.ts`     | PWA 매니페스트 — 이름, 아이콘, 테마 색상. `<html lang>`은 `en`인데 카피는 여전히 한국어임                                                                                                                                          |
 | `register-sw.tsx` | 클라이언트 컴포넌트. `public/sw.js`를 프로덕션 빌드에서만 등록함                                                                                                                                                                   |
+| `enable-mocking.tsx` | 클라이언트 컴포넌트. `src/mocks/browser.ts`(MSW)를 개발 모드에서만 기동함 — 백엔드 Swagger 미배포 구간을 메우는 임시 조치, `src/AGENTS.md` 참고 |
+| `query-provider.tsx` | 클라이언트 컴포넌트. `QueryClient`를 `useState`로 한 번만 만들어(SSR에서 모듈 스코프에 두면 요청 간 캐시가 새는 문제 방지) `QueryClientProvider`로 감쌈 |
 | `apple-icon.tsx`  | `next/og`의 `ImageResponse`로 생성하는 180×180 apple-touch-icon                                                                                                                                                                    |
 | `favicon.ico`     | 정적 파비콘                                                                                                                                                                                                                        |
 
@@ -47,12 +49,14 @@ Next.js App Router 루트입니다: 라우트, 루트 레이아웃, 전역 스�
 
 - PWA 아이콘 라우트는 Next의 파일 컨벤션을 따릅니다: 출력 파일명 그대로인 디렉토리(`icon-192.png/`) 안에 `route.tsx`가 있는 방식.
 - `RegisterServiceWorker`는 `NODE_ENV === "production"`이 아니면 아무 것도 안 합니다 — `pnpm dev`에서는 `sw.js`가 등록되지 않는 게 정상입니다.
+- `EnableMocking`은 반대로 `NODE_ENV === "development"`에서만 동작합니다 — 프로덕션 빌드에는 MSW 워커가 기동되지 않습니다. 두 서비스워커(`sw.js`, `mockServiceWorker.js`)가 서로 다른 환경에서만 등록되므로 스코프 충돌은 없습니다.
 
 ## 의존성
 
 ### 내부
 
 - `public/sw.js` — `register-sw.tsx`가 등록함
+- `src/mocks/browser.ts` — `enable-mocking.tsx`가 등록함
 - `src/components/icons.tsx` — 라우트 안에서 쓰는 아이콘 컴포넌트 25개
 
 <!-- MANUAL: -->
