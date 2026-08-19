@@ -21,7 +21,7 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 
 | 파일 | 설명 |
 |------|------|
-| `icons.tsx` | Figma에서 1:1로 뽑은 인라인 SVG 아이콘 컴포넌트 25개. 파일 `mGriQB29mZ6VpIDQDpo5F6`, 노드 `157:2536`(`icon` 섹션) |
+| `icons.tsx` | Figma에서 1:1로 뽑은 인라인 SVG 아이콘 컴포넌트 26개. 파일 `mGriQB29mZ6VpIDQDpo5F6`, 노드 `157:2536`(`icon` 섹션) |
 
 ## AI 에이전트를 위한 안내
 
@@ -53,10 +53,12 @@ App Router 라우트 트리 바깥에서 여러 라우트가 공유하는 React 
 - `edit-profile-screen.tsx`(`/my/account/edit`, 닉네임 변경)는 `login/nickname-screen.tsx`와 검증 정규식·예약어 스텁·토스트 애니메이션 패턴을 그대로 재사용하지만, Figma 스펙(노드 `345:5075`)상 캡션 문구가 다릅니다: 형식 오류든 중복 닉네임이든 필드 아래 캡션은 항상 "Please use 2–20 characters..." 힌트 문구를 빨간색으로만 보여주고, "This nickname is already in use." 문구는 캡션이 아니라 하단 토스트에만 나타납니다 — `nickname-screen.tsx`처럼 `error` prop에 서로 다른 메시지를 넣지 마세요.
 
 ### 아이콘 다루기
-- 아이콘 라이브러리 의존성(`@iconify/react`, `lucide-react` 등)은 의도적으로 없습니다. 전부 Material Symbols 표준 글리프지만, Next 16 + Turbopack에서 `unplugin-icons` 설정 리스크를 감수하느니 25개를 인라인하는 쪽이 쌉니다. 아이콘이 100개를 넘거나 디자이너가 계속 새로 추가해서 Figma 왕복이 병목이 되면 그때 다시 판단하세요.
+- 아이콘 라이브러리 의존성(`@iconify/react`, `lucide-react` 등)은 의도적으로 없습니다. 전부 Material Symbols 표준 글리프지만, Next 16 + Turbopack에서 `unplugin-icons` 설정 리스크를 감수하느니 26개를 인라인하는 쪽이 쌉니다. 아이콘이 100개를 넘거나 디자이너가 계속 새로 추가해서 Figma 왕복이 병목이 되면 그때 다시 판단하세요.
 - 모든 아이콘은 `fill`/`stroke`가 `currentColor`입니다. 색은 호출부에서 `className`의 `text-*`로 줍니다. 크기도 안 박혀 있으니 `className="size-6"` 식으로 주세요.
 - `home`/`map`/`mypage`는 selected 변형이 따로 없습니다 — Figma의 `-selected` 변형이 path가 완전히 동일하고 fill만 달랐습니다. 색으로 구분하세요: `<HomeIcon className={active ? "text-gray-900" : "text-gray-400"} />`
 - 반면 `SaveSmIcon`(16px)과 `SaveLgIcon`(24px)은 path가 실제로 다른 별개 도형이라 둘 다 있습니다. `ClockIcon`도 16px 원본입니다. viewBox 확인하고 쓰세요.
+- **화면에 필요한데 `icons.tsx`에 없는 아이콘을 만나면, 비슷한 기존 아이콘을 회전/재활용해서 때우기 전에 먼저 Figma의 아이콘 마스터 섹션(노드 `157:2536`)에 그 이름의 아이콘이 이미 있는지 `get_metadata`로 확인하세요.** 있으면 아래 절차로 정식으로 추출해서 추가하고, 그 화면 작업을 계속하세요 — 없을 때만(정말 이 프로젝트에 아직 없는 글리프일 때만) 기존 아이콘으로 임시 대체하거나 새로 그리는 걸 검토하세요. (`icon/arrow-down`이 실제로 있었는데 `ArrowRightIcon`을 90도 돌려 쓴 적이 있음 — 그런 실수를 반복하지 마세요.)
+- `img/navermap`처럼 `icon/`이 아니라 `img/`로 시작하는 노드는 단색 글리프가 아니라 래스터 로고/브랜드 마크입니다(`download_assets`로 받아도 `svgAssets`가 아니라 `rawImages`만 나옴) — `icons.tsx`에 넣지 말고, 실제로 그 로고가 필요한 화면이 생기면 그때 `public/`에 정적 이미지로 추가하세요.
 - 새 아이콘 추가: Figma MCP `download_assets`로 해당 노드의 SVG를 받으세요. export에는 캔버스 배경(`#F5F5F5` rect)과 아트보드 프레임 path(좌표가 `-277` 같은 음수)가 딸려오니 `<g id="icon/NAME">` 안쪽만 남기고, 레이어 `id`를 지우고, 하드코딩된 색을 `currentColor`로 바꾸고, `fill-rule` 같은 속성을 JSX용 camelCase로 고치세요. 원본 아이콘 이름을 코멘트로 남기세요.
 - 기억에 의존해서 글리프를 손으로 그리거나 비슷하게 만들지 말고, 실제로 export된 path 데이터를 쓰세요.
 
