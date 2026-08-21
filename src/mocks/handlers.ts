@@ -1,6 +1,8 @@
 import { http, HttpResponse, type HttpHandler } from "msw";
 import type { LoginRequest, SignupRequest } from "@/lib/api/auth";
 import { loginResponseSchema, reissueResponseSchema, resetTokenResponseSchema } from "@/lib/api/auth";
+import type { Profile } from "@/lib/api/user";
+import { nicknameAvailabilitySchema, profileResponseSchema } from "@/lib/api/user";
 
 // Demo account for the mocked Auth endpoints — punch these into the login form to see
 // success, or use as the "already registered" case for signup.
@@ -10,6 +12,13 @@ const MOCK_ACCOUNT = { email: "demo@komme.app", password: "Password1!" };
 const MOCK_VERIFICATION_CODE = "123456";
 const MOCK_RESET_TOKEN = "mock-reset-token";
 const MOCK_ACCESS_TOKEN = "mock-access-token";
+// User 도메인 mutable 상태 — 닉네임/선호 언어/위치 동의 변경이 다음 GET /users/me 응답에 반영되게.
+let mockProfile: Profile = {
+  nickname: "ryeongkk",
+  provider: "LOCAL",
+  preferredLanguage: "ENGLISH",
+  locationConsentAgreed: false,
+};
 
 function ok(data?: unknown) {
   return HttpResponse.json({ isSuccess: true, code: "COM_200", message: "성공적으로 처리되었습니다.", data });
@@ -111,6 +120,46 @@ export const handlers: HttpHandler[] = [
   // 계정 탈퇴
   http.delete("/api/v1/auth/withdraw", ({ request }) => {
     if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    return ok();
+  }),
+
+  // Notion "코메 API 명세서" > User 도메인.
+  // 마이페이지 프로필 조회
+  http.get("/api/v1/users/me", ({ request }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    return ok(profileResponseSchema.parse(mockProfile));
+  }),
+
+  // 닉네임 사용 가능 여부 조회 (공개 API)
+  http.get("/api/v1/users/nicknames/availability", ({ request }) => {
+    const nickname = new URL(request.url).searchParams.get("nickname") ?? "";
+    return ok(nicknameAvailabilitySchema.parse({ available: nickname.toLowerCase() !== "admin" }));
+  }),
+
+  // 마이페이지 닉네임 변경
+  http.patch("/api/v1/users/me/nickname", async ({ request }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    const body = (await request.json()) as { nickname?: string };
+    if (body.nickname?.toLowerCase() === "admin") return fail(409, "USER_409_1", "이미 사용 중인 닉네임입니다.");
+    if (body.nickname) mockProfile = { ...mockProfile, nickname: body.nickname };
+    return ok();
+  }),
+
+  // 마이페이지 선호 언어 변경
+  http.patch("/api/v1/users/me/language", async ({ request }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    const body = (await request.json()) as { preferredLanguage?: Profile["preferredLanguage"] };
+    if (!body.preferredLanguage) return fail(400, "COM_400", "선호 언어가 누락되었습니다.");
+    mockProfile = { ...mockProfile, preferredLanguage: body.preferredLanguage };
+    return ok();
+  }),
+
+  // 마이페이지 위치 정보 동의 변경
+  http.patch("/api/v1/users/me/location-consent", async ({ request }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    const body = (await request.json()) as { agreed?: boolean };
+    if (typeof body.agreed !== "boolean") return fail(400, "COM_400", "동의 여부가 누락되었습니다.");
+    mockProfile = { ...mockProfile, locationConsentAgreed: body.agreed };
     return ok();
   }),
 ];

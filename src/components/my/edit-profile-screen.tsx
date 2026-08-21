@@ -1,25 +1,40 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
 import { TextField } from "@/components/ui/text-field";
+import { ApiError } from "@/lib/api/client";
+import { assertNicknameAvailable, NicknameTakenError, updateNickname } from "@/lib/api/user";
 
 const NICKNAME_PATTERN = /^[a-zA-Z0-9]{2,20}$/;
 const NICKNAME_HINT = "Please use 2–20 characters, letters and numbers only.";
-// ponytail: reserved-word check stands in for the real duplicate-check API — same stand-in as login/nickname-screen.tsx
-const RESERVED_NICKNAMES = ["admin"];
 const TOAST_DURATION_MS = 2500;
 
 export function EditProfileScreen() {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
-  const [isDuplicate, setIsDuplicate] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   const isValidFormat = NICKNAME_PATTERN.test(nickname);
+
+  const editMutation = useMutation({
+    mutationFn: async () => {
+      await assertNicknameAvailable(nickname);
+      await updateNickname(nickname);
+    },
+    // replace, not push — otherwise Back from /my/account lands right back on this
+    // now-stale edit screen instead of skipping past it.
+    onSuccess: () => router.replace("/my/account"),
+    onError: () => setShowToast(true),
+  });
+
+  const isDuplicate =
+    editMutation.error instanceof NicknameTakenError ||
+    (editMutation.error instanceof ApiError && editMutation.error.code === "USER_409_1");
   const hasError = (nickname.length > 0 && !isValidFormat) || isDuplicate;
-  const canEdit = isValidFormat && !isDuplicate;
+  const canEdit = isValidFormat && !editMutation.isPending;
 
   useEffect(() => {
     if (!showToast) return;
@@ -29,17 +44,12 @@ export function EditProfileScreen() {
 
   const handleChange = (value: string) => {
     setNickname(value);
-    setIsDuplicate(false);
+    editMutation.reset();
   };
 
   const handleEdit = () => {
     if (!canEdit) return;
-    if (RESERVED_NICKNAMES.includes(nickname.toLowerCase())) {
-      setIsDuplicate(true);
-      setShowToast(true);
-      return;
-    }
-    router.push("/my/account");
+    editMutation.mutate();
   };
 
   return (
@@ -85,7 +95,7 @@ export function EditProfileScreen() {
             canEdit ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
           }`}
         >
-          Edit
+          {editMutation.isPending ? "Saving…" : "Edit"}
         </button>
       </div>
     </>

@@ -1,11 +1,14 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowRightIcon, MypageIcon } from "@/components/icons";
 import { Tapbar } from "@/components/ui/tapbar";
+import { getMyProfile } from "@/lib/api/user";
 
 export function MyScreen() {
   const router = useRouter();
+  const profileQuery = useQuery({ queryKey: ["me"], queryFn: getMyProfile });
 
   return (
     <>
@@ -24,7 +27,7 @@ export function MyScreen() {
           <span className="flex size-[52px] shrink-0 items-center justify-center rounded-full border border-gray-100 bg-gray-50 p-2.5">
             <MypageIcon className="size-7 text-gray-400" />
           </span>
-          <span className="flex-1 text-left text-body-sb-16 text-black">ryeongkk</span>
+          <span className="flex-1 text-left text-body-sb-16 text-black">{profileQuery.data?.nickname ?? ""}</span>
           <ArrowRightIcon className="size-6 shrink-0 text-gray-900" />
         </button>
 

@@ -6,12 +6,9 @@ import { useEffect, useState } from "react";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
 import { authErrorMessage } from "@/lib/api/auth-error-messages";
 import { TextField } from "@/components/ui/text-field";
+import { assertNicknameAvailable, NicknameTakenError } from "@/lib/api/user";
 
 const NICKNAME_PATTERN = /^[a-zA-Z0-9]{2,20}$/;
-// ponytail: reserved-word check is a client-side stand-in for the real duplicate-check API
-// (User domain, GET /users/nicknames/availability — out of scope for this Auth-domain pass).
-// signup() below still catches a real duplicate via AUTH_409_2 as a second layer.
-const RESERVED_NICKNAMES = ["admin"];
 const TOAST_DURATION_MS = 2500;
 
 type NicknameScreenProps = {
@@ -27,21 +24,25 @@ export function NicknameScreen({ onSubmit }: NicknameScreenProps) {
 
   const isValidFormat = NICKNAME_PATTERN.test(nickname);
   const hasFormatError = touched && nickname.length > 0 && !isValidFormat;
-  const isReserved = RESERVED_NICKNAMES.includes(nickname.toLowerCase());
 
   const signupMutation = useMutation({
-    mutationFn: () => onSubmit(nickname),
+    mutationFn: async () => {
+      await assertNicknameAvailable(nickname);
+      await onSubmit(nickname);
+    },
     onSuccess: () => router.push("/login"),
     onError: () => setShowToast(true),
   });
 
-  const canStart = isValidFormat && !isReserved && !signupMutation.isPending;
-  const isDuplicate = isReserved || signupMutation.isError;
-  const toastMessage = isReserved
-    ? "This nickname is already in use."
-    : signupMutation.isError
-      ? authErrorMessage(signupMutation.error, "Couldn't create your account. Please try again.")
-      : null;
+  const canStart = isValidFormat && !signupMutation.isPending;
+  const isDuplicate = signupMutation.isError;
+  // signup() below still catches a real duplicate via AUTH_409_2 as a second layer
+  // (race condition between the availability check above and the actual signup call).
+  const toastMessage = signupMutation.isError
+    ? signupMutation.error instanceof NicknameTakenError
+      ? "This nickname is already in use."
+      : authErrorMessage(signupMutation.error, "Couldn't create your account. Please try again.")
+    : null;
 
   useEffect(() => {
     if (!showToast) return;
@@ -56,10 +57,6 @@ export function NicknameScreen({ onSubmit }: NicknameScreenProps) {
 
   const handleStart = () => {
     if (!canStart) return;
-    if (isReserved) {
-      setShowToast(true);
-      return;
-    }
     signupMutation.mutate();
   };
 
