@@ -1,6 +1,9 @@
 import { http, HttpResponse, type HttpHandler } from "msw";
+import { z } from "zod";
 import type { LoginRequest, SignupRequest } from "@/lib/api/auth";
 import { loginResponseSchema, reissueResponseSchema, resetTokenResponseSchema } from "@/lib/api/auth";
+import type { CourseDetail, CourseSpot, CourseStatus, CreateCourseRequest, SpotCount } from "@/lib/api/course";
+import { courseDetailSchema, courseSummarySchema } from "@/lib/api/course";
 import type { Profile } from "@/lib/api/user";
 import { nicknameAvailabilitySchema, profileResponseSchema } from "@/lib/api/user";
 
@@ -19,6 +22,74 @@ let mockProfile: Profile = {
   preferredLanguage: "ENGLISH",
   locationConsentAgreed: false,
 };
+
+// Course 도메인 mutable 상태 — title이 null이면 "생성만 되고 저장은 안 된" 코스(목록엔 안 뜸,
+// 코스 생성 직후 완료 화면 상태와 동일). status는 실제 API처럼 컬럼이 아니라 visitDate와 오늘
+// 날짜를 비교해 조회 시점에 계산.
+type StoredCourse = CourseDetail;
+const SPOT_COUNT_TO_N: Record<SpotCount, number> = { TWO: 2, THREE: 3, FOUR_OR_MORE: 4 };
+const MOCK_SPOT_NAMES = [
+  "Hongdae Spa Day",
+  "Seongsu Brunch Café",
+  "Namsan Tower View",
+  "Gwangalli Beach Walk",
+  "Jamsil Night Market",
+];
+function generateMockSpots(count: number): CourseSpot[] {
+  return Array.from({ length: count }, (_, i) => ({
+    spotId: i + 1,
+    name: MOCK_SPOT_NAMES[i % MOCK_SPOT_NAMES.length],
+    sequence: i + 1,
+    timeSlot: ["MORNING", "AFTERNOON", "EVENING"][i % 3],
+    latitude: 37.55 + i * 0.01,
+    longitude: 126.99 + i * 0.01,
+    thumbnailUrl: "",
+    distanceToNextMeters: i < count - 1 ? 500 + i * 300 : null,
+  }));
+}
+function isoDateOffset(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+let nextCourseId = 1;
+const mockCourses: StoredCourse[] = [
+  {
+    courseId: nextCourseId++,
+    title: "Hongdae Spa Day",
+    regionName: "Hongdae, Seoul",
+    topics: ["HEALING"],
+    visitDate: isoDateOffset(2),
+    spots: generateMockSpots(3),
+  },
+  {
+    courseId: nextCourseId++,
+    title: "Seongsu Food Trip",
+    regionName: "Seongsu-dong, Seoul",
+    topics: ["FOOD"],
+    visitDate: isoDateOffset(5),
+    spots: generateMockSpots(3),
+  },
+  {
+    courseId: nextCourseId++,
+    title: "Busan Beach Day",
+    regionName: "Haeundae, Busan",
+    topics: ["EXPLORATION"],
+    visitDate: isoDateOffset(-10),
+    spots: generateMockSpots(4),
+  },
+  {
+    courseId: nextCourseId++,
+    title: "Jamsil Night Out",
+    regionName: "Jamsil, Seoul",
+    topics: ["FOOD", "HEALING"],
+    visitDate: isoDateOffset(-30),
+    spots: generateMockSpots(2),
+  },
+];
+function courseStatus(visitDate: string): CourseStatus {
+  return visitDate >= isoDateOffset(0) ? "UPCOMING" : "HISTORY";
+}
 
 function ok(data?: unknown) {
   return HttpResponse.json({ isSuccess: true, code: "COM_200", message: "성공적으로 처리되었습니다.", data });
@@ -160,6 +231,75 @@ export const handlers: HttpHandler[] = [
     const body = (await request.json()) as { agreed?: boolean };
     if (typeof body.agreed !== "boolean") return fail(400, "COM_400", "동의 여부가 누락되었습니다.");
     mockProfile = { ...mockProfile, locationConsentAgreed: body.agreed };
+    return ok();
+  }),
+
+  // Notion "코메 API 명세서" > Course 도메인.
+  // 코스 생성 — 실제 스팟 검색 대신 spotCount만큼 목업 스팟을 생성.
+  // ponytail: COURSE_400_1(서울/부산 외 지역)은 여기서 트리거하지 않음 — course-create-screen.tsx의
+  // regionKeyword는 항상 create-data.ts의 POPULAR_SPOTS/searchPlaces/reverse-geocode 결과 중
+  // 하나로만 채워지고 그중 상당수(팝업 스팟 칩)가 "Seongsu-dong"처럼 도시명 없는 구/동 이름이라
+  // 문자열 매칭으로 서울/부산 여부를 판정할 수 없음(예전엔 "seoul"/"busan" 포함 여부로 체크했다가
+  // 팝업 스팟 선택 시 항상 실패하는 버그였음). UI가 애초에 서울/부산 값만 만들어내므로 자유 입력
+  // 경로 자체가 없어 이 실패 케이스를 목업으로 재현할 방법이 없음.
+  http.post("/api/v1/courses", async ({ request }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    const body = (await request.json()) as CreateCourseRequest;
+    const course: StoredCourse = {
+      courseId: nextCourseId++,
+      regionName: body.regionKeyword,
+      topics: body.topics,
+      visitDate: body.visitDate,
+      spots: generateMockSpots(SPOT_COUNT_TO_N[body.spotCount] ?? 3),
+      title: null,
+    };
+    mockCourses.push(course);
+    return ok(courseDetailSchema.parse(course));
+  }),
+
+  // 코스 저장 — title만 갱신, 저장해야 목록 조회에 노출됨
+  http.patch("/api/v1/courses/:courseId/save", async ({ request, params }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    const course = mockCourses.find((c) => c.courseId === Number(params.courseId));
+    if (!course) return fail(404, "COURSE_404_2", "코스가 없거나 본인 코스가 아닙니다.");
+    const body = (await request.json()) as { title?: string };
+    if (!body.title || body.title.length > 30) return fail(400, "COM_400", "코스명을 확인해주세요.");
+    course.title = body.title;
+    return ok();
+  }),
+
+  // 코스 목록 조회 — title이 있는(저장된) 코스만, status는 visitDate로 조회 시점에 계산
+  http.get("/api/v1/courses", ({ request }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    const status = new URL(request.url).searchParams.get("status") as CourseStatus | null;
+    const summaries = mockCourses
+      .filter((c) => c.title !== null && courseStatus(c.visitDate) === status)
+      .map((c) => ({
+        courseId: c.courseId,
+        title: c.title as string,
+        regionName: c.regionName,
+        visitDate: c.visitDate,
+        topics: c.topics,
+        spotCount: c.spots.length,
+      }))
+      .sort((a, b) => (status === "HISTORY" ? b.visitDate.localeCompare(a.visitDate) : a.visitDate.localeCompare(b.visitDate)));
+    return ok(z.array(courseSummarySchema).parse(summaries));
+  }),
+
+  // 코스 상세 조회
+  http.get("/api/v1/courses/:courseId", ({ request, params }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    const course = mockCourses.find((c) => c.courseId === Number(params.courseId));
+    if (!course) return fail(404, "COURSE_404_2", "코스가 없거나 본인 코스가 아닙니다.");
+    return ok(courseDetailSchema.parse(course));
+  }),
+
+  // 코스 삭제
+  http.delete("/api/v1/courses/:courseId", ({ request, params }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    const idx = mockCourses.findIndex((c) => c.courseId === Number(params.courseId));
+    if (idx === -1) return fail(404, "COURSE_404_2", "코스가 없거나 본인 코스가 아닙니다.");
+    mockCourses.splice(idx, 1);
     return ok();
   }),
 ];

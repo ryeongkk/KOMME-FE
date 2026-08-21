@@ -1,3 +1,4 @@
+import type { CourseTopic, SpotCount } from "@/lib/api/course";
 import { SPOTS, type Spot } from "@/components/spots/data";
 
 export const POPULAR_SPOTS: Record<"Seoul" | "Busan", string[]> = {
@@ -7,10 +8,21 @@ export const POPULAR_SPOTS: Record<"Seoul" | "Busan", string[]> = {
 
 // Figma nodes 352:7394 / 352:7460 — step 2 of Create Course (select topics).
 export const TOPICS = ["Food", "Healing", "Exploration"] as const;
+// POST /api/v1/courses expects the Course API's enum, not these display labels.
+export const TOPIC_TO_API: Record<(typeof TOPICS)[number], CourseTopic> = {
+  Food: "FOOD",
+  Healing: "HEALING",
+  Exploration: "EXPLORATION",
+};
 
 // Figma nodes 352:7529 / 354:8127 / 357:8751 — step 3 of Create Course
 // (spot count + visit date; the date bottom sheet itself is ui/visit-date-picker.tsx).
 export const SPOT_COUNTS = ["2 spots", "3 spots", "4+ spots"] as const;
+export const SPOT_COUNT_TO_API: Record<(typeof SPOT_COUNTS)[number], SpotCount> = {
+  "2 spots": "TWO",
+  "3 spots": "THREE",
+  "4+ spots": "FOUR_OR_MORE",
+};
 
 // ponytail: no district-search API yet; static list mirrors the Figma search mock (the
 // "Seong" query demo, node 340:4584) plus the popular spots so typing has something to
@@ -25,6 +37,16 @@ const SEARCHABLE_PLACES = [
   "Seongsu-dong 2-ga",
   "Seongdong-gu",
 ];
+
+// Local y/m/d parts, not toISOString() (which is UTC and can shift the date near
+// midnight) — same approach ui/visit-date-picker.tsx uses internally to render the
+// calendar, duplicated here since that one isn't exported.
+export function formatVisitDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
 export function searchPlaces(query: string): string[] {
   const q = query.trim().toLowerCase();

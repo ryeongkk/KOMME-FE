@@ -11,12 +11,16 @@ export function SpotsStep({
   onSelectSpotCount,
   visitDate,
   onVisitDateChange,
+  submitting = false,
+  error = null,
   onNext,
 }: {
   spotCount: SpotCount | null;
   onSelectSpotCount: (count: SpotCount) => void;
   visitDate: Date | null;
   onVisitDateChange: (date: Date) => void;
+  submitting?: boolean;
+  error?: string | null;
   onNext: () => void;
 }) {
   return (
@@ -57,15 +61,17 @@ export function SpotsStep({
         )}
       </div>
 
+      {error && <p className="text-caption-m-12 text-negative">{error}</p>}
+
       <button
         type="button"
-        disabled={!spotCount || !visitDate}
+        disabled={!spotCount || !visitDate || submitting}
         onClick={onNext}
         className={`mt-auto flex h-[52px] w-full items-center justify-center rounded-lg text-body-m-14 ${
-          spotCount && visitDate ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
+          spotCount && visitDate && !submitting ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
         }`}
       >
-        Next
+        {submitting ? "Creating course…" : "Next"}
       </button>
     </>
   );

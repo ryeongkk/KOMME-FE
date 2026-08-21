@@ -1,10 +1,12 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarIcon, LocationIcon, PlusIcon } from "@/components/icons";
 import { type Schedule, ScheduleCard } from "@/components/ui/schedule-card";
 import { Tapbar } from "@/components/ui/tapbar";
+import { type CourseSummary, getCourses } from "@/lib/api/course";
 
 const TABS = ["Upcoming", "History"] as const;
 type Tab = (typeof TABS)[number];
@@ -16,27 +18,39 @@ type HistoryCourse = {
   spots: number;
 };
 
-// ponytail: no course API yet, static stub list (same shape as home-screen's
-// UPCOMING_SCHEDULE). Empty array renders the empty state (Figma node 354:7845);
-// populate it to preview the list state (node 137:1121).
-const UPCOMING_COURSES: Schedule[] = [
-  { id: "1", dDay: "D-DAY", title: "Hongdae Spa Day", date: "2026-07-28", spots: 3 },
-  { id: "2", dDay: "D-2", title: "Hongdae Spa Day", date: "2026-07-29", spots: 3 },
-  { id: "3", dDay: "D-3", title: "Hongdae Spa Day", date: "2026-07-30", spots: 3 },
-];
+// GET /api/v1/courses?status=UPCOMING sorts D-day-임박순 already, so this only needs to
+// turn visitDate into a "D-N"/"D-DAY" label for the card badge.
+function dDayLabel(visitDate: string): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(`${visitDate}T00:00:00`);
+  const diffDays = Math.round((target.getTime() - today.getTime()) / 86_400_000);
+  return diffDays <= 0 ? "D-DAY" : `D-${diffDays}`;
+}
 
-// ponytail: no course API yet, static stub list. Empty array renders the empty
-// state (Figma node 354:7899); populate it to preview the list state (node 354:7785).
-const HISTORY_COURSES: HistoryCourse[] = [
-  { id: "1", title: "Hongdae Spa Day", date: "2026-07-28", spots: 3 },
-  { id: "2", title: "Hongdae Spa Day", date: "2026-07-28", spots: 3 },
-  { id: "3", title: "Hongdae Spa Day", date: "2026-07-28", spots: 3 },
-];
+function toSchedule(course: CourseSummary): Schedule {
+  return {
+    id: String(course.courseId),
+    dDay: dDayLabel(course.visitDate),
+    title: course.title,
+    date: course.visitDate,
+    spots: course.spotCount,
+  };
+}
+
+function toHistoryCourse(course: CourseSummary): HistoryCourse {
+  return { id: String(course.courseId), title: course.title, date: course.visitDate, spots: course.spotCount };
+}
 
 export function CourseScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab: Tab = searchParams.get("tab") === "history" ? "History" : "Upcoming";
+
+  const upcomingQuery = useQuery({ queryKey: ["courses", "UPCOMING"], queryFn: () => getCourses("UPCOMING") });
+  const historyQuery = useQuery({ queryKey: ["courses", "HISTORY"], queryFn: () => getCourses("HISTORY") });
+  const upcomingCourses = upcomingQuery.data?.map(toSchedule) ?? [];
+  const historyCourses = historyQuery.data?.map(toHistoryCourse) ?? [];
 
   // Tab state lives in the URL (not useState) so that navigating to a course
   // detail page and back restores whichever tab was active — router.back()
@@ -80,18 +94,18 @@ export function CourseScreen() {
 
       <div className="flex flex-1 flex-col">
         {tab === "Upcoming" ? (
-          UPCOMING_COURSES.length > 0 ? (
+          upcomingCourses.length > 0 ? (
             <div className="flex w-full flex-col gap-3 px-4 py-5">
-              {UPCOMING_COURSES.map((course) => (
+              {upcomingCourses.map((course) => (
                 <ScheduleCard key={course.id} schedule={course} />
               ))}
             </div>
           ) : (
             <EmptyState />
           )
-        ) : HISTORY_COURSES.length > 0 ? (
+        ) : historyCourses.length > 0 ? (
           <div className="flex w-full flex-col gap-3 px-4 py-5">
-            {HISTORY_COURSES.map((course) => (
+            {historyCourses.map((course) => (
               <HistoryCard key={course.id} course={course} />
             ))}
           </div>
