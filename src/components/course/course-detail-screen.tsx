@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, DeleteIcon, MapIcon } from "@/components/icons";
 import { deleteCourse, getCourseDetail } from "@/lib/api/course";
+import { courseErrorMessage } from "@/lib/api/course-error-messages";
 import { CourseSpotCard } from "./course-spot-card";
 
 // Figma node 358:10841. `courseId` comes from the /course/[id] route param (page.tsx
@@ -17,7 +18,7 @@ export function CourseDetailScreen({ courseId }: { courseId: string }) {
   const courseQuery = useQuery({
     queryKey: ["course", id],
     queryFn: () => getCourseDetail(id),
-    enabled: Number.isFinite(id) && id > 0,
+    enabled: Number.isInteger(id) && id > 0,
   });
 
   const deleteMutation = useMutation({
@@ -61,22 +62,37 @@ export function CourseDetailScreen({ courseId }: { courseId: string }) {
         </div>
       </div>
 
-      <div className="relative flex w-full flex-col gap-3 px-4 py-5">
-        <div className="absolute top-5 bottom-5 left-[32px] border-l border-dashed border-gray-200" />
-        {spots.map((spot) => (
-          <div key={spot.spotId} className="flex flex-col gap-3">
-            <div className="flex w-full items-center gap-[27px] pl-[11px]">
-              <div className="relative z-10 size-2.5 shrink-0 rounded-full bg-secondary-300" />
-              <CourseSpotCard spot={spot} />
-            </div>
-            {spot.distanceToNextMeters !== null && (
-              <div className="relative z-10 bg-white py-1">
-                <p className="text-caption-m-12 text-gray-500">{(spot.distanceToNextMeters / 1000).toFixed(1)}km</p>
+      {courseQuery.isError ? (
+        // Don't render the (empty) timeline as if the course really has no spots —
+        // that's indistinguishable from a genuine fetch failure otherwise.
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
+          <p className="text-body-sb-16 text-black">Couldn&apos;t load this course.</p>
+          <button
+            type="button"
+            onClick={() => courseQuery.refetch()}
+            className="text-body-m-14 text-secondary-300 underline"
+          >
+            Try again
+          </button>
+        </div>
+      ) : (
+        <div className="relative flex w-full flex-col gap-3 px-4 py-5">
+          <div className="absolute top-5 bottom-5 left-[32px] border-l border-dashed border-gray-200" />
+          {spots.map((spot) => (
+            <div key={spot.spotId} className="flex flex-col gap-3">
+              <div className="flex w-full items-center gap-[27px] pl-[11px]">
+                <div className="relative z-10 size-2.5 shrink-0 rounded-full bg-secondary-300" />
+                <CourseSpotCard spot={spot} />
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+              {spot.distanceToNextMeters !== null && (
+                <div className="relative z-10 bg-white py-1">
+                  <p className="text-caption-m-12 text-gray-500">{(spot.distanceToNextMeters / 1000).toFixed(1)}km</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div
         id="delete-course-dialog"
@@ -86,6 +102,11 @@ export function CourseDetailScreen({ courseId }: { courseId: string }) {
         <div className="flex w-full flex-col gap-0.5">
           <p className="w-full text-body-sb-16 text-black">Delete this course?</p>
           <p className="w-full text-body-m-14 text-gray-600">This action cannot be undone.</p>
+          {deleteMutation.isError && (
+            <p role="alert" className="w-full text-caption-r-12 text-negative">
+              {courseErrorMessage(deleteMutation.error, "Couldn't delete this course. Please try again.")}
+            </p>
+          )}
         </div>
         <div className="flex gap-[9px]">
           <button

@@ -94,7 +94,11 @@ export function CourseScreen() {
 
       <div className="flex flex-1 flex-col">
         {tab === "Upcoming" ? (
-          upcomingCourses.length > 0 ? (
+          upcomingQuery.isError ? (
+            <ErrorState onRetry={() => upcomingQuery.refetch()} />
+          ) : upcomingQuery.isLoading ? (
+            <LoadingState />
+          ) : upcomingCourses.length > 0 ? (
             <div className="flex w-full flex-col gap-3 px-4 py-5">
               {upcomingCourses.map((course) => (
                 <ScheduleCard key={course.id} schedule={course} />
@@ -103,6 +107,10 @@ export function CourseScreen() {
           ) : (
             <EmptyState />
           )
+        ) : historyQuery.isError ? (
+          <ErrorState onRetry={() => historyQuery.refetch()} />
+        ) : historyQuery.isLoading ? (
+          <LoadingState />
         ) : historyCourses.length > 0 ? (
           <div className="flex w-full flex-col gap-3 px-4 py-5">
             {historyCourses.map((course) => (
@@ -134,6 +142,27 @@ function EmptyState() {
     <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
       <p className="text-body-sb-16 text-black">No courses created yet.</p>
       <p className="text-body-m-14 text-black">Create your own course right now!</p>
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="flex flex-1 items-center justify-center">
+      <p className="text-body-m-14 text-gray-400">Loading…</p>
+    </div>
+  );
+}
+
+// A failed fetch must not render the same as "you have no courses" — that hides real
+// API/auth errors behind a misleading empty state.
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
+      <p className="text-body-sb-16 text-black">Couldn&apos;t load your courses.</p>
+      <button type="button" onClick={onRetry} className="text-body-m-14 text-secondary-300 underline">
+        Try again
+      </button>
     </div>
   );
 }
