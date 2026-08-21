@@ -2,20 +2,18 @@
 
 import { NicknameScreen } from "@/components/login/nickname-screen";
 import { signup } from "@/lib/api/auth";
-import { SessionExpiredError } from "@/lib/api/auth-error-messages";
-import { useSignupDraft } from "@/lib/signup-draft";
+import { useRequiredSignupDraft, useSignupDraft } from "@/lib/signup-draft";
 
 export default function NicknamePage() {
-  const { draft, clear } = useSignupDraft();
+  const { clear } = useSignupDraft();
+  const draft = useRequiredSignupDraft("email", "password");
+  if (!draft) return null;
+
   return (
     <main className="flex flex-1 flex-col items-center bg-white px-4 pb-10">
       <NicknameScreen
         onSubmit={async (nickname) => {
-          const { email, password } = draft;
-          if (!email || !password) {
-            throw new SessionExpiredError("Signup session expired — please start over from the email step.");
-          }
-          await signup({ email, password, nickname });
+          await signup({ email: draft.email, password: draft.password, nickname });
           clear();
         }}
       />

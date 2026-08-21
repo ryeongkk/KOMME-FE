@@ -1,10 +1,13 @@
 "use client";
 
 import { PasswordScreen } from "@/components/login/password-screen";
-import { useSignupDraft } from "@/lib/signup-draft";
+import { useRequiredSignupDraft, useSignupDraft } from "@/lib/signup-draft";
 
 export default function PasswordPage() {
   const { save } = useSignupDraft();
+  const draft = useRequiredSignupDraft("email");
+  if (!draft) return null;
+
   return (
     <main className="flex flex-1 flex-col items-center bg-white px-4 pb-10">
       <PasswordScreen
