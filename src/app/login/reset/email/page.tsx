@@ -2,9 +2,10 @@
 
 import { EmailScreen } from "@/components/login/email-screen";
 import { sendPasswordResetVerification } from "@/lib/api/auth";
-import { savePasswordResetDraft } from "@/lib/password-reset-draft";
+import { useResetDraft } from "@/lib/password-reset-draft";
 
 export default function ResetEmailPage() {
+  const { save, clear } = useResetDraft();
   return (
     <main className="flex flex-1 flex-col items-center bg-white px-4 pb-10">
       <EmailScreen
@@ -13,7 +14,10 @@ export default function ResetEmailPage() {
         nextPath="/login/reset/code"
         onSubmit={async (email) => {
           await sendPasswordResetVerification(email);
-          savePasswordResetDraft({ email });
+          // Same reasoning as /login/email: start a fresh draft so a stale resetToken
+          // from an earlier abandoned reset never rides along with a new email.
+          clear();
+          save({ email });
         }}
       />
     </main>

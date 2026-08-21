@@ -12,12 +12,9 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type EmailScreenProps = {
   headerTitle: string;
   heading: string;
-  // ponytail: email (PII) is passed via `?email=` query, not sessionStorage — same
-  // props-only, no-shared-store pattern as the rest of this screen trio (see
-  // components/AGENTS.md). Revisit if that's ever a real compliance requirement.
-  /** Route to continue to once the email is valid; the email is appended as a `?email=` query param. */
+  /** Route to continue to once the email is valid. */
   nextPath: string;
-  /** Signup sends an email-verification code, reset sends a password-reset code — decided by the route's page.tsx. */
+  /** Signup sends an email-verification code, reset sends a password-reset code — decided by the route's page.tsx. Also where the route stashes the email into its draft Context, since it isn't carried via the URL. */
   onSubmit: (email: string) => Promise<void>;
 };
 
@@ -31,7 +28,7 @@ export function EmailScreen({ headerTitle, heading, nextPath, onSubmit }: EmailS
 
   const sendCodeMutation = useMutation({
     mutationFn: () => onSubmit(email),
-    onSuccess: () => router.push(`${nextPath}?email=${encodeURIComponent(email)}`),
+    onSuccess: () => router.push(nextPath),
   });
 
   const errorMessage = sendCodeMutation.isError

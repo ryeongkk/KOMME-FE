@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
 import { authErrorMessage } from "@/lib/api/auth-error-messages";
@@ -20,6 +20,8 @@ function formatTime(totalSeconds: number) {
 
 type CodeScreenProps = {
   headerTitle: string;
+  /** Email the code was sent to — the route's page.tsx reads this from its draft (signup or reset). */
+  email: string;
   /** Route to continue to once the code is verified. */
   nextPath: string;
   /** Signup confirms an email-verification code, reset confirms a password-reset code — decided by the route's page.tsx. */
@@ -28,9 +30,8 @@ type CodeScreenProps = {
   onResend: (email: string) => Promise<void>;
 };
 
-export function CodeScreen({ headerTitle, nextPath, onConfirm, onResend }: CodeScreenProps) {
+export function CodeScreen({ headerTitle, email, nextPath, onConfirm, onResend }: CodeScreenProps) {
   const router = useRouter();
-  const email = useSearchParams().get("email") ?? "";
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [secondsLeft, setSecondsLeft] = useState(TIMER_SECONDS);
   const [showToast, setShowToast] = useState(false);

@@ -1,9 +1,10 @@
 "use client";
 
 import { PasswordScreen } from "@/components/login/password-screen";
-import { saveSignupDraft } from "@/lib/signup-draft";
+import { useSignupDraft } from "@/lib/signup-draft";
 
 export default function PasswordPage() {
+  const { save } = useSignupDraft();
   return (
     <main className="flex flex-1 flex-col items-center bg-white px-4 pb-10">
       <PasswordScreen
@@ -13,7 +14,7 @@ export default function PasswordPage() {
         // Signup's own submit (signup()) waits until the nickname step, once the
         // whole draft is collected — this step just stashes the password for it.
         onSubmit={async (password) => {
-          saveSignupDraft({ password });
+          save({ password });
         }}
       />
     </main>

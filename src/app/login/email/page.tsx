@@ -2,9 +2,10 @@
 
 import { EmailScreen } from "@/components/login/email-screen";
 import { sendEmailVerification } from "@/lib/api/auth";
-import { clearSignupDraft, saveSignupDraft } from "@/lib/signup-draft";
+import { useSignupDraft } from "@/lib/signup-draft";
 
 export default function EmailPage() {
+  const { save, clear } = useSignupDraft();
   return (
     <main className="flex flex-1 flex-col items-center bg-white px-4 pb-10">
       <EmailScreen
@@ -16,8 +17,8 @@ export default function EmailPage() {
           // Entering this step always starts (or restarts) signup — clear first so a
           // password left over from a previously abandoned draft never rides along with
           // a new email (the password step below re-collects it either way).
-          clearSignupDraft();
-          saveSignupDraft({ email });
+          clear();
+          save({ email });
         }}
       />
     </main>
