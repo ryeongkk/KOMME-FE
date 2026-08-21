@@ -73,11 +73,21 @@ export function useRequiredSignupDraft<K extends keyof SignupDraft>(
 ): Required<Pick<SignupDraft, K>> | null {
   const { draft } = useSignupDraft();
   const router = useRouter();
-  const ready = keys.every((key) => Boolean(draft[key]));
+  // Snapshotted once on mount, not re-read from `draft` on every render. /login/nickname's
+  // own onSubmit calls clear() right before navigating away on success — if this stayed
+  // reactive, that clear() would flip `ready` to false while this page is still mounted,
+  // firing the redirect below in a race against the real "signup succeeded" navigation
+  // (and sometimes winning it, bouncing a just-completed signup back to /login/email).
+  // Each step is a fresh mount anyway (separate route), so "checked once at mount" is the
+  // right scope — this only needs to catch "arrived here without the data", not react to
+  // this same page clearing its own data on the way out.
+  const [snapshot] = useState<Required<Pick<SignupDraft, K>> | null>(() =>
+    keys.every((key) => Boolean(draft[key])) ? (draft as Required<Pick<SignupDraft, K>>) : null,
+  );
 
   useEffect(() => {
-    if (!ready) router.replace("/login/email");
-  }, [ready, router]);
+    if (!snapshot) router.replace("/login/email");
+  }, [snapshot, router]);
 
-  return ready ? (draft as Required<Pick<SignupDraft, K>>) : null;
+  return snapshot;
 }

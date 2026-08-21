@@ -58,11 +58,16 @@ export function useRequiredResetDraft<K extends keyof PasswordResetDraft>(
 ): Required<Pick<PasswordResetDraft, K>> | null {
   const { draft } = useResetDraft();
   const router = useRouter();
-  const ready = keys.every((key) => Boolean(draft[key]));
+  // Snapshotted once on mount — same reasoning as useRequiredSignupDraft (signup-draft.tsx):
+  // /login/reset/password's own onSubmit calls clear() on success, and reacting to that
+  // would race its "reset succeeded" navigation with a spurious redirect back to email.
+  const [snapshot] = useState<Required<Pick<PasswordResetDraft, K>> | null>(() =>
+    keys.every((key) => Boolean(draft[key])) ? (draft as Required<Pick<PasswordResetDraft, K>>) : null,
+  );
 
   useEffect(() => {
-    if (!ready) router.replace("/login/reset/email");
-  }, [ready, router]);
+    if (!snapshot) router.replace("/login/reset/email");
+  }, [snapshot, router]);
 
-  return ready ? (draft as Required<Pick<PasswordResetDraft, K>>) : null;
+  return snapshot;
 }
