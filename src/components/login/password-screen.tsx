@@ -1,9 +1,11 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeftIcon } from "@/components/icons";
 import { TextField } from "@/components/ui/text-field";
+import { authErrorMessage } from "@/lib/api/auth-error-messages";
 
 const PASSWORD_HINT = "Password must be 8–20 characters with letters, numbers, and special characters.";
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$/;
@@ -13,9 +15,11 @@ type PasswordScreenProps = {
   heading: string;
   /** Route to continue to once the password is confirmed. */
   nextPath: string;
+  /** Signup stashes the password in the signup draft; reset calls resetPassword() — decided by the route's page.tsx. */
+  onSubmit: (password: string) => Promise<void>;
 };
 
-export function PasswordScreen({ headerTitle, heading, nextPath }: PasswordScreenProps) {
+export function PasswordScreen({ headerTitle, heading, nextPath, onSubmit }: PasswordScreenProps) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,9 +33,14 @@ export function PasswordScreen({ headerTitle, heading, nextPath }: PasswordScree
   const isConfirmed = confirmPassword.length > 0 && confirmPassword === password && isValidPassword;
   const canSubmit = isValidPassword && isConfirmed;
 
+  const submitMutation = useMutation({
+    mutationFn: () => onSubmit(password),
+    onSuccess: () => router.push(nextPath),
+  });
+
   const handleNext = () => {
-    if (!canSubmit) return;
-    router.push(nextPath);
+    if (!canSubmit || submitMutation.isPending) return;
+    submitMutation.mutate();
   };
 
   return (
@@ -71,20 +80,26 @@ export function PasswordScreen({ headerTitle, heading, nextPath }: PasswordScree
           value={confirmPassword}
           onChange={setConfirmPassword}
           onBlur={() => setTouchedConfirm(true)}
-          error={isMismatched ? "Passwords do not match" : undefined}
+          error={
+            isMismatched
+              ? "Passwords do not match"
+              : submitMutation.isError
+                ? authErrorMessage(submitMutation.error)
+                : undefined
+          }
           helperText={isConfirmed ? "Password confirmed." : undefined}
         />
       </div>
 
       <button
         type="button"
-        disabled={!canSubmit}
+        disabled={!canSubmit || submitMutation.isPending}
         onClick={handleNext}
         className={`mt-auto flex h-[52px] w-full items-center justify-center rounded-lg text-body-m-14 ${
           canSubmit ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
         }`}
       >
-        Next
+        {submitMutation.isPending ? "Submitting…" : "Next"}
       </button>
     </>
   );

@@ -1,9 +1,12 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ArrowLeftIcon } from "@/components/icons";
-import { SPOT_COUNTS } from "./create-data";
+import { courseErrorMessage } from "@/lib/api/course-error-messages";
+import { createCourse } from "@/lib/api/course";
+import { formatVisitDate, SPOT_COUNT_TO_API, SPOT_COUNTS, TOPIC_TO_API } from "./create-data";
 import { LocationStep } from "./create-location-step";
 import { SearchStep } from "./create-search-step";
 import { SpotsStep } from "./create-spots-step";
@@ -27,6 +30,11 @@ export function CourseCreateScreen() {
   const [spotCount, setSpotCount] = useState<(typeof SPOT_COUNTS)[number] | null>(null);
   const [visitDate, setVisitDate] = useState<Date | null>(null);
   const pendingErrorRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const createCourseMutation = useMutation({
+    mutationFn: createCourse,
+    onSuccess: (course) => router.push(`/course/create/complete?courseId=${course.courseId}`),
+  });
 
   const toggleTopic = (topic: string) => {
     setTopics((prev) => {
@@ -143,7 +151,17 @@ export function CourseCreateScreen() {
           onSelectSpotCount={setSpotCount}
           visitDate={visitDate}
           onVisitDateChange={setVisitDate}
-          onNext={() => router.push("/course/create/complete")}
+          submitting={createCourseMutation.isPending}
+          error={createCourseMutation.isError ? courseErrorMessage(createCourseMutation.error) : null}
+          onNext={() => {
+            if (!location || topics.size === 0 || !spotCount || !visitDate) return;
+            createCourseMutation.mutate({
+              regionKeyword: location,
+              topics: [...topics].map((topic) => TOPIC_TO_API[topic as keyof typeof TOPIC_TO_API]),
+              spotCount: SPOT_COUNT_TO_API[spotCount],
+              visitDate: formatVisitDate(visitDate),
+            });
+          }}
         />
       )}
     </>

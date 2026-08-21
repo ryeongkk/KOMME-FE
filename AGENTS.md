@@ -52,5 +52,8 @@ Next.js 16(App Router) 기반 PWA. 방한 외국인이 "한국인처럼 살아�
 - **Next.js 16.2.12** — App Router, `next/font`, 생성형 아이콘용 `next/og`(`ImageResponse`)
 - **React 19.2.4** / **React DOM 19.2.4**
 - **Tailwind CSS v4** — CSS-first 설정, `tailwind.config.js` 없음
+- **MSW 2.15.0** (devDependency) — 백엔드 Swagger 미배포 구간을 메우는 네트워크 레벨 mock. `src/mocks/` 참고
+- **Zod 4** — API 응답 런타임 검증. `src/lib/api/client.ts`의 `apiFetch`가 매 응답의 `data`를 스키마로 파싱
+- **TanStack Query 5** — 서버 상태 캐싱/뮤테이션. `src/app/query-provider.tsx`의 `QueryProvider`가 루트 레이아웃에서 감쌈
 
 <!-- MANUAL: -->

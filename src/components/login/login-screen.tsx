@@ -1,8 +1,13 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { AppleIcon, CheckIcon, GlobeIcon, GoogleIcon } from "@/components/icons";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { login } from "@/lib/api/auth";
+import { saveAuthTokens } from "@/lib/auth-tokens";
+import { ApiError } from "@/lib/api/client";
 
 const languages = [
   { label: "English", selected: true },
@@ -12,31 +17,66 @@ const languages = [
 
 export function LoginScreen() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const loginMutation = useMutation({
+    mutationFn: () => login({ email, password, preferredLanguage: "ENGLISH" }),
+    onSuccess: (data) => {
+      saveAuthTokens(data);
+      router.push("/");
+    },
+  });
+
+  const canSubmit = email.trim().length > 0 && password.length > 0 && !loginMutation.isPending;
+
+  const handleLogin = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!canSubmit) return;
+    loginMutation.mutate();
+  };
+
+  const errorMessage = loginMutation.isError
+    ? loginMutation.error instanceof ApiError && loginMutation.error.code === "AUTH_401_1"
+      ? "Incorrect email or password."
+      : "Something went wrong. Please try again."
+    : null;
 
   return (
     <>
       <p className="mt-[150.5px] text-title-b-20 text-black">Logo</p>
 
-      <div className="mt-[103.5px] flex w-full flex-col gap-4">
+      <form onSubmit={handleLogin} className="mt-[103.5px] flex w-full flex-col gap-4">
         <div className="flex w-full flex-col gap-5">
           <div className="flex w-full flex-col gap-3">
             <input
               type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               placeholder="Enter your email"
               className="h-12 w-full rounded-lg border border-gray-200 bg-white p-4 text-body-m-14 text-gray-900 placeholder-gray-400"
             />
             <input
               type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               placeholder="Enter your password"
               className="h-12 w-full rounded-lg border border-gray-200 bg-white p-4 text-body-m-14 text-gray-900 placeholder-gray-400"
             />
+            {errorMessage && (
+              <p role="alert" className="text-caption-r-12 text-negative">
+                {errorMessage}
+              </p>
+            )}
           </div>
           <button
-            type="button"
-            disabled
-            className="flex h-[52px] w-full items-center justify-center rounded-lg bg-gray-100 text-body-m-14 text-gray-400"
+            type="submit"
+            disabled={!canSubmit}
+            className={`flex h-[52px] w-full items-center justify-center rounded-lg text-body-m-14 ${
+              canSubmit ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
+            }`}
           >
-            Login
+            {loginMutation.isPending ? "Logging in…" : "Login"}
           </button>
         </div>
 
@@ -49,7 +89,7 @@ export function LoginScreen() {
             Reset Password
           </button>
         </div>
-      </div>
+      </form>
 
       <div className="mt-[98px] flex items-center gap-5">
         <button

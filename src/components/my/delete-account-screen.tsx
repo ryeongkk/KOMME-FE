@@ -1,8 +1,12 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeftIcon, CheckboxEmptyIcon, CheckboxFillIcon } from "@/components/icons";
+import { withdraw } from "@/lib/api/auth";
+import { authErrorMessage } from "@/lib/api/auth-error-messages";
+import { clearAuthTokens } from "@/lib/auth-tokens";
 
 const NOTICES = [
   "All account information will be deleted and cannot be recovered even if you sign up again.",
@@ -11,7 +15,21 @@ const NOTICES = [
 
 export function DeleteAccountScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [agreed, setAgreed] = useState(false);
+
+  // Unlike logout, a failed withdraw must not look like it succeeded — the account is
+  // still there, so stay on the dialog and show why instead of navigating away.
+  const withdrawMutation = useMutation({
+    mutationFn: withdraw,
+    onSuccess: () => {
+      clearAuthTokens();
+      // Same reasoning as my-account-screen.tsx's logout: don't let a back-navigation
+      // flash the deleted account's cached profile.
+      queryClient.removeQueries({ queryKey: ["me"] });
+      router.replace("/login");
+    },
+  });
 
   return (
     <>
@@ -61,7 +79,6 @@ export function DeleteAccountScreen() {
         </button>
       </div>
 
-      {/* ponytail: no auth session to clear yet, confirming just returns to the login screen — same stand-in as my-account-screen.tsx logout dialog */}
       <div
         id="delete-confirm-dialog"
         popover="auto"
@@ -72,6 +89,11 @@ export function DeleteAccountScreen() {
           <p className="w-full text-body-m-14 text-gray-600">
             {`Are you sure you want to permanently delete your account? This action cannot be undone.`}
           </p>
+          {withdrawMutation.isError && (
+            <p role="alert" className="w-full text-caption-r-12 text-negative">
+              {authErrorMessage(withdrawMutation.error, "Couldn't delete your account. Please try again.")}
+            </p>
+          )}
         </div>
         <div className="flex gap-[9px]">
           <button
@@ -84,10 +106,11 @@ export function DeleteAccountScreen() {
           </button>
           <button
             type="button"
-            onClick={() => router.push("/login")}
+            disabled={withdrawMutation.isPending}
+            onClick={() => withdrawMutation.mutate()}
             className="h-10 w-[129px] rounded-lg bg-negative text-body-m-14 text-white"
           >
-            Delete
+            {withdrawMutation.isPending ? "Deleting…" : "Delete"}
           </button>
         </div>
       </div>

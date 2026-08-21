@@ -1,12 +1,14 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
 import { ArrowLeftIcon, MapIcon, SaveLgIcon } from "@/components/icons";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { SpotCard } from "@/components/ui/spot-card";
-import { COURSE_STOPS } from "./create-data";
+import { deleteCourse, getCourseDetail, saveCourse } from "@/lib/api/course";
+import { courseErrorMessage } from "@/lib/api/course-error-messages";
+import { CourseSpotCard } from "./course-spot-card";
 
 // Shared shape for this screen's two confirm dialogs (leave / regenerate) — same
 // popover markup as course-detail-screen.tsx's delete dialog, just parameterized since
@@ -55,20 +57,47 @@ function ConfirmDialog({
   );
 }
 
-// Figma node 357:8812 — course created, ready to save. The header's save icon opens the
-// Save Course bottom sheet from the pasted mock; confirming routes to /course. The back
+// Figma node 357:8812 — course created, ready to save. `courseId` (query param POST
+// /api/v1/courses handed back via router.push in course-create-screen.tsx) drives a
+// getCourseDetail() fetch for the real spot timeline. The header's save icon opens the
+// Save Course bottom sheet; confirming calls saveCourse() and routes to /course. The back
 // arrow opens a "Leave this page?" confirm dialog (node 390:13995) instead of navigating
-// straight back; confirming "Leave" discards the just-created course and routes to the
-// Course tab. The bottom "Try Again" button (node 357:9479) opens a "Regenerate this
-// course?" confirm dialog (node 390:14119); confirming routes to /course/create to redo
-// the wizard from step 1. Both confirms use router.replace so this screen doesn't linger
-// in history. The header's map icon opens course-route-map.tsx (Figma node 357:8859),
-// which so far just drops a numbered pin on the first stop.
+// straight back; confirming "Leave" calls deleteCourse() (POST /courses already persisted
+// this course — leaving without saving means discarding it) and routes to the Course tab.
+// The bottom "Try Again" button (node 357:9479) opens a "Regenerate this course?" confirm
+// dialog (node 390:14119); confirming also deletes the course and routes to
+// /course/create to redo the wizard from step 1. Both confirms use router.replace so this
+// screen doesn't linger in history. The header's map icon still opens the static
+// course-route-map.tsx stub (Figma node 357:8859) — out of scope for this pass, no
+// courseId wired through yet.
 export function CreatedCourseScreen() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const sheetId = useId();
   const [name, setName] = useState("");
   const canSave = name.trim().length > 0;
+
+  const courseId = Number(searchParams.get("courseId"));
+  const hasCourseId = Number.isFinite(courseId) && courseId > 0;
+  const courseQuery = useQuery({
+    queryKey: ["course", courseId],
+    queryFn: () => getCourseDetail(courseId),
+    enabled: hasCourseId,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: () => saveCourse(courseId, name.trim()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      router.replace("/course");
+    },
+  });
+
+  // Leave and Try Again both discard the just-created (not-yet-saved) course.
+  const discardMutation = useMutation({ mutationFn: () => deleteCourse(courseId) });
+
+  const spots = courseQuery.data?.spots ?? [];
 
   return (
     <>
@@ -89,14 +118,16 @@ export function CreatedCourseScreen() {
 
       <div className="relative flex w-full flex-1 flex-col gap-3 py-5">
         <div className="absolute top-5 bottom-5 left-[16px] border-l border-dashed border-gray-200" />
-        {COURSE_STOPS.map((stop, i) => (
-          <div key={i} className="flex flex-col gap-3">
+        {spots.map((spot) => (
+          <div key={spot.spotId} className="flex flex-col gap-3">
             <div className="flex w-full items-center gap-[27px] pl-[11px]">
               <div className="relative z-10 size-2.5 shrink-0 rounded-full bg-secondary-300" />
-              <SpotCard spot={stop.spot} />
+              <CourseSpotCard spot={spot} />
             </div>
-            {stop.distanceToNextKm !== null && (
-              <p className="pl-[53px] text-caption-m-12 text-gray-500">{stop.distanceToNextKm}km</p>
+            {spot.distanceToNextMeters !== null && (
+              <div className="relative z-10 bg-white py-1">
+                <p className="text-caption-m-12 text-gray-500">{(spot.distanceToNextMeters / 1000).toFixed(1)}km</p>
+              </div>
             )}
           </div>
         ))}
@@ -119,17 +150,18 @@ export function CreatedCourseScreen() {
             aria-label="Course name"
             className="flex h-12 w-full items-center rounded-lg border border-gray-200 px-4 text-body-m-14 text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
           />
+          {saveMutation.isError && (
+            <p className="text-caption-m-12 text-negative">{courseErrorMessage(saveMutation.error)}</p>
+          )}
           <button
             type="button"
-            disabled={!canSave}
-            popoverTarget={sheetId}
-            popoverTargetAction="hide"
-            onClick={() => router.replace("/course")}
+            disabled={!canSave || saveMutation.isPending}
+            onClick={() => saveMutation.mutate()}
             className={`flex h-[53px] w-full items-center justify-center rounded-lg text-body-m-14 ${
-              canSave ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
+              canSave && !saveMutation.isPending ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
             }`}
           >
-            Save
+            {saveMutation.isPending ? "Saving…" : "Save"}
           </button>
         </div>
       </BottomSheet>
@@ -139,14 +171,14 @@ export function CreatedCourseScreen() {
         title="Leave this page?"
         message="Your progress will be lost and the course will be deleted."
         confirmLabel="Leave"
-        onConfirm={() => router.replace("/course")}
+        onConfirm={() => discardMutation.mutate(undefined, { onSuccess: () => router.replace("/course") })}
       />
       <ConfirmDialog
         id="try-again-dialog"
         title="Regenerate this course?"
         message="Your progress will be lost and the course will be deleted."
         confirmLabel="Try Again"
-        onConfirm={() => router.replace("/course/create")}
+        onConfirm={() => discardMutation.mutate(undefined, { onSuccess: () => router.replace("/course/create") })}
       />
     </>
   );

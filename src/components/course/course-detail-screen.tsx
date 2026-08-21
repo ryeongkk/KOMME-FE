@@ -1,39 +1,60 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, DeleteIcon, MapIcon } from "@/components/icons";
-import { SPOTS, type Spot } from "@/components/spots/data";
-import { SpotCard } from "@/components/ui/spot-card";
+import { deleteCourse, getCourseDetail } from "@/lib/api/course";
+import { CourseSpotCard } from "./course-spot-card";
 
-type CourseStop = {
-  spot: Spot;
-  distanceToNextKm: number | null;
-};
-
-// ponytail: no course-detail API yet, static stub — reuses the same spot 3x to match
-// the Figma mock. distanceToNextKm is the gap between stops on this course, unrelated
-// to each spot's own distanceKm (distance from the user's current location).
-const COURSE_STOPS: CourseStop[] = [
-  { spot: SPOTS[0], distanceToNextKm: 1.4 },
-  { spot: SPOTS[0], distanceToNextKm: 2.8 },
-  { spot: SPOTS[0], distanceToNextKm: null },
-];
-
-export function CourseDetailScreen() {
+// Figma node 358:10841. `courseId` comes from the /course/[id] route param (page.tsx
+// passes it straight through).
+export function CourseDetailScreen({ courseId }: { courseId: string }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const id = Number(courseId);
+
+  const courseQuery = useQuery({
+    queryKey: ["course", id],
+    queryFn: () => getCourseDetail(id),
+    enabled: Number.isFinite(id) && id > 0,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteCourse(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      // Not push("/course") — router.back() returns to whichever tab
+      // (Upcoming/History) the user came from, same reasoning as the back button below.
+      router.back();
+    },
+  });
+
+  const spots = courseQuery.data?.spots ?? [];
 
   return (
     <>
-      <div className="flex w-full items-center justify-between px-4 py-2.5">
-        <button type="button" aria-label="Back" onClick={() => router.back()} className="flex-1 text-black">
+      <div className="relative flex w-full items-center justify-between px-4 py-2.5">
+        <button type="button" aria-label="Back" onClick={() => router.back()} className="shrink-0 text-black">
           <ArrowLeftIcon className="size-6" />
         </button>
-        <p className="flex-1 text-center text-body-sb-16 text-black">Course name</p>
-        <div className="flex flex-1 items-center justify-end gap-2.5">
-          {/* ponytail: no map action wired up yet, no course-detail API to act on */}
-          <button type="button" aria-label="View on map" className="text-black">
+        {/* Absolutely positioned (not a 3rd flex-1 column) so it centers on the full header
+            width — the icon side (map+delete, 74px) is wider than the back side (40px), so a
+            flex-1 middle column would center within the leftover space instead of the screen.
+            px-[76px] clears the wider (icon) side on both edges so the text itself stays
+            symmetric regardless of which side is wider. DOM order kept between the two
+            buttons (not moved to a natural absolute-item spot) for reading/tab order — its
+            own position: absolute already excludes it from the flex layout either way. */}
+        <p className="absolute inset-x-0 truncate px-[76px] text-center text-body-sb-16 text-black">
+          {courseQuery.data?.title ?? "Course name"}
+        </p>
+        <div className="flex shrink-0 items-center gap-2.5">
+          {/* ponytail: reuses the same static-stub map screen created-course-screen.tsx
+              links to (course-route-map.tsx) — not courseId-aware, always shows
+              create-data.ts's COURSE_STOPS regardless of which course this is */}
+          <Link href="/course/create/complete/map" aria-label="View on map" className="text-black">
             <MapIcon className="size-6" />
-          </button>
+          </Link>
           <button type="button" aria-label="Delete course" popoverTarget="delete-course-dialog" className="text-black">
             <DeleteIcon className="size-6" />
           </button>
@@ -42,22 +63,21 @@ export function CourseDetailScreen() {
 
       <div className="relative flex w-full flex-col gap-3 px-4 py-5">
         <div className="absolute top-5 bottom-5 left-[32px] border-l border-dashed border-gray-200" />
-        {COURSE_STOPS.map((stop, i) => (
-          <div key={i} className="flex flex-col gap-3">
+        {spots.map((spot) => (
+          <div key={spot.spotId} className="flex flex-col gap-3">
             <div className="flex w-full items-center gap-[27px] pl-[11px]">
               <div className="relative z-10 size-2.5 shrink-0 rounded-full bg-secondary-300" />
-              <SpotCard spot={stop.spot} />
+              <CourseSpotCard spot={spot} />
             </div>
-            {stop.distanceToNextKm !== null && (
-              <p className="pl-[53px] text-caption-m-12 text-gray-500">{stop.distanceToNextKm}km</p>
+            {spot.distanceToNextMeters !== null && (
+              <div className="relative z-10 bg-white py-1">
+                <p className="text-caption-m-12 text-gray-500">{(spot.distanceToNextMeters / 1000).toFixed(1)}km</p>
+              </div>
             )}
           </div>
         ))}
       </div>
 
-      {/* ponytail: no course API yet, confirming just goes back — router.back() (not
-          push("/course")) so it lands on whichever tab (Upcoming/History) the user came from,
-          same reasoning as the header back button. */}
       <div
         id="delete-course-dialog"
         popover="auto"
@@ -78,8 +98,9 @@ export function CourseDetailScreen() {
           </button>
           <button
             type="button"
-            onClick={() => router.back()}
-            className="h-10 w-[129px] rounded-lg bg-negative text-body-m-14 text-white"
+            disabled={deleteMutation.isPending}
+            onClick={() => deleteMutation.mutate()}
+            className="h-10 w-[129px] rounded-lg bg-negative text-body-m-14 text-white disabled:opacity-60"
           >
             Delete
           </button>
