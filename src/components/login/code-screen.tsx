@@ -44,11 +44,18 @@ export function CodeScreen({ headerTitle, nextPath, onConfirm, onResend }: CodeS
     onSuccess: () => router.push(nextPath),
     onError: () => setShowToast(true),
   });
-  const resendMutation = useMutation({ mutationFn: () => onResend(email) });
+  const resendMutation = useMutation({
+    mutationFn: () => onResend(email),
+    onError: () => setShowToast(true),
+  });
 
   const canSubmit = isComplete && !isExpired && !confirmMutation.isPending;
   const incorrect = confirmMutation.isError;
-  const errorMessage = incorrect ? authErrorMessage(confirmMutation.error, "The verification code is incorrect.") : null;
+  const errorMessage = incorrect
+    ? authErrorMessage(confirmMutation.error, "The verification code is incorrect.")
+    : resendMutation.isError
+      ? authErrorMessage(resendMutation.error, "Couldn't resend the code. Please try again.")
+      : null;
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -88,6 +95,7 @@ export function CodeScreen({ headerTitle, nextPath, onConfirm, onResend }: CodeS
         setSecondsLeft(TIMER_SECONDS);
         setDigits(Array(CODE_LENGTH).fill(""));
         confirmMutation.reset();
+        resendMutation.reset();
         inputRefs.current[0]?.focus();
       },
     });

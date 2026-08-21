@@ -12,6 +12,9 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type EmailScreenProps = {
   headerTitle: string;
   heading: string;
+  // ponytail: email (PII) is passed via `?email=` query, not sessionStorage — same
+  // props-only, no-shared-store pattern as the rest of this screen trio (see
+  // components/AGENTS.md). Revisit if that's ever a real compliance requirement.
   /** Route to continue to once the email is valid; the email is appended as a `?email=` query param. */
   nextPath: string;
   /** Signup sends an email-verification code, reset sends a password-reset code — decided by the route's page.tsx. */

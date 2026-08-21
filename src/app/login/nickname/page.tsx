@@ -2,6 +2,7 @@
 
 import { NicknameScreen } from "@/components/login/nickname-screen";
 import { signup } from "@/lib/api/auth";
+import { SessionExpiredError } from "@/lib/api/auth-error-messages";
 import { clearSignupDraft, readSignupDraft } from "@/lib/signup-draft";
 
 export default function NicknamePage() {
@@ -11,7 +12,7 @@ export default function NicknamePage() {
         onSubmit={async (nickname) => {
           const { email, password } = readSignupDraft();
           if (!email || !password) {
-            throw new Error("Signup session expired — please start over from the email step.");
+            throw new SessionExpiredError("Signup session expired — please start over from the email step.");
           }
           await signup({ email, password, nickname });
           clearSignupDraft();

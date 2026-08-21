@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon } from "@/components/icons";
 import { logout } from "@/lib/api/auth";
@@ -8,6 +8,7 @@ import { clearAuthTokens, getRefreshToken } from "@/lib/auth-tokens";
 
 export function MyAccountScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const logoutMutation = useMutation({
     mutationFn: () => {
@@ -18,7 +19,10 @@ export function MyAccountScreen() {
     // considers the session gone, so there's nothing left to "fail" the user's intent.
     onSettled: () => {
       clearAuthTokens();
-      router.push("/login");
+      // Drop the cached profile so a back-navigation into /my after logout can't
+      // flash the previous user's nickname before the (now-401) refetch lands.
+      queryClient.removeQueries({ queryKey: ["me"] });
+      router.replace("/login");
     },
   });
 

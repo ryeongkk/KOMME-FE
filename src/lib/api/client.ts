@@ -18,10 +18,11 @@ export class ApiError extends Error {
  * against), so this is what catches the response silently drifting from the Notion spec.
  */
 export async function apiFetch<T>(path: string, dataSchema: ZodType<T>, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  });
+  // Normalize via Headers so a Headers instance or [key, value][] tuple array in
+  // init.headers merges correctly — a plain object spread silently drops those.
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  const res = await fetch(path, { ...init, headers });
   const body = await res.json();
   if (!res.ok || !body.isSuccess) {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Request failed");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeftIcon, CheckboxEmptyIcon, CheckboxFillIcon } from "@/components/icons";
@@ -15,6 +15,7 @@ const NOTICES = [
 
 export function DeleteAccountScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [agreed, setAgreed] = useState(false);
 
   // Unlike logout, a failed withdraw must not look like it succeeded — the account is
@@ -23,7 +24,10 @@ export function DeleteAccountScreen() {
     mutationFn: withdraw,
     onSuccess: () => {
       clearAuthTokens();
-      router.push("/login");
+      // Same reasoning as my-account-screen.tsx's logout: don't let a back-navigation
+      // flash the deleted account's cached profile.
+      queryClient.removeQueries({ queryKey: ["me"] });
+      router.replace("/login");
     },
   });
 

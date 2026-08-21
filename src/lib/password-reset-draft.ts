@@ -10,7 +10,8 @@ export function savePasswordResetDraft(patch: PasswordResetDraft): void {
 
 export function readPasswordResetDraft(): PasswordResetDraft {
   try {
-    return JSON.parse(sessionStorage.getItem(KEY) ?? "{}");
+    const parsed: unknown = JSON.parse(sessionStorage.getItem(KEY) ?? "{}");
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
   } catch {
     return {};
   }

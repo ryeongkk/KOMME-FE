@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
 import { TextField } from "@/components/ui/text-field";
+import { authErrorMessage } from "@/lib/api/auth-error-messages";
 import { ApiError } from "@/lib/api/client";
 import { assertNicknameAvailable, NicknameTakenError, updateNickname } from "@/lib/api/user";
 
@@ -35,6 +36,11 @@ export function EditProfileScreen() {
     (editMutation.error instanceof ApiError && editMutation.error.code === "USER_409_1");
   const hasError = (nickname.length > 0 && !isValidFormat) || isDuplicate;
   const canEdit = isValidFormat && !editMutation.isPending;
+  const toastMessage = isDuplicate
+    ? "This nickname is already in use."
+    : editMutation.isError
+      ? authErrorMessage(editMutation.error, "Couldn't update your nickname. Please try again.")
+      : null;
 
   useEffect(() => {
     if (!showToast) return;
@@ -44,7 +50,9 @@ export function EditProfileScreen() {
 
   const handleChange = (value: string) => {
     setNickname(value);
-    editMutation.reset();
+    // Don't reset a still-in-flight mutation — that would clear isPending and let a
+    // second submit fire before the first one has resolved.
+    if (!editMutation.isPending) editMutation.reset();
   };
 
   const handleEdit = () => {
@@ -75,7 +83,7 @@ export function EditProfileScreen() {
       </div>
 
       <div className="relative mt-auto flex w-full flex-col px-4 pt-5 pb-3">
-        {isDuplicate && (
+        {toastMessage && (
           <div
             role="alert"
             className={`absolute bottom-full left-1/2 mb-5 flex w-[301px] -translate-x-1/2 items-center gap-2 rounded-xl bg-gray-700 px-4 py-3 transition-all duration-300 ${
@@ -83,7 +91,7 @@ export function EditProfileScreen() {
             }`}
           >
             <WarningIcon className="size-[18px] shrink-0 text-secondary-200" />
-            <p className="text-body-m-14 text-white">This nickname is already in use.</p>
+            <p className="text-body-m-14 text-white">{toastMessage}</p>
           </div>
         )}
 

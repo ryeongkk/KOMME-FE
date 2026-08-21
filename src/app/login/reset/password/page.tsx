@@ -2,6 +2,7 @@
 
 import { PasswordScreen } from "@/components/login/password-screen";
 import { resetPassword } from "@/lib/api/auth";
+import { SessionExpiredError } from "@/lib/api/auth-error-messages";
 import { clearPasswordResetDraft, readPasswordResetDraft } from "@/lib/password-reset-draft";
 
 export default function ResetPasswordPage() {
@@ -14,7 +15,7 @@ export default function ResetPasswordPage() {
         onSubmit={async (password) => {
           const { resetToken } = readPasswordResetDraft();
           if (!resetToken) {
-            throw new Error("Reset session expired — please start over from the email step.");
+            throw new SessionExpiredError("Reset session expired — please start over from the email step.");
           }
           await resetPassword(resetToken, password);
           clearPasswordResetDraft();

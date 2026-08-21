@@ -13,7 +13,8 @@ export function saveSignupDraft(patch: SignupDraft): void {
 
 export function readSignupDraft(): SignupDraft {
   try {
-    return JSON.parse(sessionStorage.getItem(KEY) ?? "{}");
+    const parsed: unknown = JSON.parse(sessionStorage.getItem(KEY) ?? "{}");
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
   } catch {
     return {};
   }
