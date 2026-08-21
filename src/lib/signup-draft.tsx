@@ -8,13 +8,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 // a plain useState in one of them wouldn't survive navigating to the next.
 //
 // In-memory only (React Context provided by src/app/login/layout.tsx, which doesn't
-// remount across these routes) — deliberately NOT sessionStorage. A signup password sits
-// here only until the wizard is submitted or abandoned; Web Storage is readable by any
-// same-origin script via a single enumerable API (trivial full-dump for any XSS payload,
-// and by any browser extension with site-data access) in a way in-memory state isn't. A
-// page reload mid-signup loses the draft — every step past the first handles that via
-// useRequiredSignupDraft below (redirects back to /login/email), so there's no UX
-// regression, just a "start over" bounce instead of silently accepting bad input.
+// remount across these routes) for `password` — deliberately NOT sessionStorage. A signup
+// password is a credential; Web Storage is readable by any same-origin script via a single
+// enumerable API (trivial full-dump for any XSS payload, and by any browser extension with
+// site-data access) in a way in-memory state isn't, so it never touches storage.
+//
+// `email` is the one field mirrored to sessionStorage below. It isn't a credential — leaking
+// it only reveals "this address tried to sign up here", not account access — and mirroring
+// it means a reload mid-wizard only loses the one step that actually needs `password`
+// (nickname) instead of bouncing every later step back to /login/email (see
+// useRequiredSignupDraft). ponytail: this does mean email is readable by the same XSS/
+// extension surface password is deliberately kept off of — accepted since email alone isn't
+// an account-takeover vector. Revisit if that stops being true (e.g. email becomes usable
+// as a passwordless login token).
+const EMAIL_KEY = "komme.signupEmail";
+
 type SignupDraft = { email?: string; password?: string };
 
 type SignupDraftContextValue = {
@@ -25,12 +33,24 @@ type SignupDraftContextValue = {
 
 const SignupDraftContext = createContext<SignupDraftContextValue | null>(null);
 
+function initialDraft(): SignupDraft {
+  if (typeof window === "undefined") return {};
+  const email = sessionStorage.getItem(EMAIL_KEY);
+  return email ? { email } : {};
+}
+
 export function SignupDraftProvider({ children }: { children: ReactNode }) {
-  const [draft, setDraft] = useState<SignupDraft>({});
+  const [draft, setDraft] = useState<SignupDraft>(initialDraft);
   const value: SignupDraftContextValue = {
     draft,
-    save: (patch) => setDraft((prev) => ({ ...prev, ...patch })),
-    clear: () => setDraft({}),
+    save: (patch) => {
+      setDraft((prev) => ({ ...prev, ...patch }));
+      if (patch.email) sessionStorage.setItem(EMAIL_KEY, patch.email);
+    },
+    clear: () => {
+      setDraft({});
+      sessionStorage.removeItem(EMAIL_KEY);
+    },
   };
   return <SignupDraftContext.Provider value={value}>{children}</SignupDraftContext.Provider>;
 }
@@ -42,10 +62,12 @@ export function useSignupDraft(): SignupDraftContextValue {
 }
 
 // Every /login/* step past the first (email) requires some subset of the draft to already
-// be filled in — a reload wipes the in-memory draft, and without this guard a step would
-// render normally and only fail once its onSubmit runs (or, worse for /login/code, fire an
-// API call with an empty email). Redirects to /login/email and renders nothing until the
-// requested keys are present; narrows the return type so callers don't need `!` asserts.
+// be filled in. `email` survives a reload (see EMAIL_KEY above) but `password` doesn't, so
+// in practice only /login/nickname's guard can still fire after one — without this guard a
+// step would render normally and only fail once its onSubmit runs (or, worse for
+// /login/code, fire an API call with an empty email). Redirects to /login/email and renders
+// nothing until the requested keys are present; narrows the return type so callers don't
+// need `!` asserts.
 export function useRequiredSignupDraft<K extends keyof SignupDraft>(
   ...keys: K[]
 ): Required<Pick<SignupDraft, K>> | null {
