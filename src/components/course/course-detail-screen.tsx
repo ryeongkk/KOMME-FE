@@ -14,11 +14,12 @@ export function CourseDetailScreen({ courseId }: { courseId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const id = Number(courseId);
+  const hasValidId = Number.isInteger(id) && id > 0;
 
   const courseQuery = useQuery({
     queryKey: ["course", id],
     queryFn: () => getCourseDetail(id),
-    enabled: Number.isInteger(id) && id > 0,
+    enabled: hasValidId,
   });
 
   const deleteMutation = useMutation({
@@ -32,6 +33,20 @@ export function CourseDetailScreen({ courseId }: { courseId: string }) {
   });
 
   const spots = courseQuery.data?.spots ?? [];
+
+  // Invalid id (e.g. a hand-edited URL) — same reasoning as created-course-screen.tsx's
+  // hasCourseId gate: don't render the delete button/dialog at all, since deleteCourse(NaN)
+  // would otherwise be one tap away.
+  if (!hasValidId) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+        <p className="text-body-sb-16 text-black">This course link is invalid.</p>
+        <Link href="/course" className="text-body-m-14 text-secondary-300 underline">
+          Back to courses
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -74,6 +89,12 @@ export function CourseDetailScreen({ courseId }: { courseId: string }) {
           >
             Try again
           </button>
+        </div>
+      ) : courseQuery.isLoading ? (
+        // Same reasoning: an in-flight fetch has no spots yet either, and shouldn't
+        // render as if the course really is empty.
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-body-m-14 text-gray-400">Loading…</p>
         </div>
       ) : (
         <div className="relative flex w-full flex-col gap-3 px-4 py-5">

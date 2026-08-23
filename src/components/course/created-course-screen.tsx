@@ -50,7 +50,8 @@ function ConfirmDialog({
           type="button"
           popoverTarget={id}
           popoverTargetAction="hide"
-          className="h-10 w-[129px] rounded-lg border border-gray-100 bg-white text-body-m-14 text-gray-500"
+          disabled={isPending}
+          className="h-10 w-[129px] rounded-lg border border-gray-100 bg-white text-body-m-14 text-gray-500 disabled:opacity-60"
         >
           Cancel
         </button>
@@ -153,6 +154,10 @@ export function CreatedCourseScreen() {
             Try again
           </button>
         </div>
+      ) : courseQuery.isLoading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-body-m-14 text-gray-400">Loading…</p>
+        </div>
       ) : (
         <div className="relative flex w-full flex-1 flex-col gap-3 py-5">
           <div className="absolute top-5 bottom-5 left-[16px] border-l border-dashed border-gray-200" />
@@ -194,10 +199,12 @@ export function CreatedCourseScreen() {
           )}
           <button
             type="button"
-            disabled={!canSave || saveMutation.isPending}
+            disabled={!canSave || saveMutation.isPending || discardMutation.isPending}
             onClick={() => saveMutation.mutate()}
             className={`flex h-[53px] w-full items-center justify-center rounded-lg text-body-m-14 ${
-              canSave && !saveMutation.isPending ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
+              canSave && !saveMutation.isPending && !discardMutation.isPending
+                ? "bg-gray-900 text-white"
+                : "bg-gray-100 text-gray-400"
             }`}
           >
             {saveMutation.isPending ? "Saving…" : "Save"}

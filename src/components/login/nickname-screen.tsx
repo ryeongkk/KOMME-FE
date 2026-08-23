@@ -65,7 +65,13 @@ export function NicknameScreen({ onBack, onSubmit, onNext }: NicknameScreenProps
   return (
     <>
       <div className="flex w-full items-center justify-between py-2.5">
-        <button type="button" aria-label="Back" onClick={onBack} className="text-gray-900">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={onBack}
+          disabled={signupMutation.isPending}
+          className="text-gray-900 disabled:opacity-40"
+        >
           <ArrowLeftIcon className="size-6" />
         </button>
         <p className="text-body-sb-16 text-black">Profile Setting</p>
