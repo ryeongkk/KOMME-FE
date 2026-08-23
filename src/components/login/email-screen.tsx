@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeftIcon } from "@/components/icons";
 import { TextField } from "@/components/ui/text-field";
@@ -12,14 +11,15 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type EmailScreenProps = {
   headerTitle: string;
   heading: string;
-  /** Route to continue to once the email is valid. */
-  nextPath: string;
-  /** Signup sends an email-verification code, reset sends a password-reset code — decided by the route's page.tsx. Also where the route stashes the email into its draft Context, since it isn't carried via the URL. */
+  /** Previous step, or leave the wizard entirely — decided by the orchestrating page.tsx. */
+  onBack: () => void;
+  /** Signup sends an email-verification code, reset sends a password-reset code — decided by the route's page.tsx. */
   onSubmit: (email: string) => Promise<void>;
+  /** Advance to the next step once the email is valid. */
+  onNext: () => void;
 };
 
-export function EmailScreen({ headerTitle, heading, nextPath, onSubmit }: EmailScreenProps) {
-  const router = useRouter();
+export function EmailScreen({ headerTitle, heading, onBack, onSubmit, onNext }: EmailScreenProps) {
   const [email, setEmail] = useState("");
   const [touched, setTouched] = useState(false);
 
@@ -28,7 +28,7 @@ export function EmailScreen({ headerTitle, heading, nextPath, onSubmit }: EmailS
 
   const sendCodeMutation = useMutation({
     mutationFn: () => onSubmit(email),
-    onSuccess: () => router.push(nextPath),
+    onSuccess: onNext,
   });
 
   const errorMessage = sendCodeMutation.isError
@@ -45,7 +45,7 @@ export function EmailScreen({ headerTitle, heading, nextPath, onSubmit }: EmailS
   return (
     <>
       <div className="flex w-full items-center justify-between py-2.5">
-        <button type="button" aria-label="Back" onClick={() => router.back()} className="text-gray-900">
+        <button type="button" aria-label="Back" onClick={onBack} className="text-gray-900">
           <ArrowLeftIcon className="size-6" />
         </button>
         <p className="text-body-sb-16 text-black">{headerTitle}</p>

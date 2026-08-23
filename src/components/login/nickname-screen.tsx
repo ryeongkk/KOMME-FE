@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
 import { authErrorMessage } from "@/lib/api/auth-error-messages";
@@ -12,12 +11,15 @@ const NICKNAME_PATTERN = /^[a-zA-Z0-9]{2,20}$/;
 const TOAST_DURATION_MS = 2500;
 
 type NicknameScreenProps = {
-  /** Reads the rest of the signup draft (email/password) and calls signup(). */
+  /** Previous step (password), or leave the wizard entirely — decided by the orchestrating page.tsx. */
+  onBack: () => void;
+  /** Reads the rest of the signup state (email/password) and calls signup(). */
   onSubmit: (nickname: string) => Promise<void>;
+  /** Signup is complete — leave the wizard. */
+  onNext: () => void;
 };
 
-export function NicknameScreen({ onSubmit }: NicknameScreenProps) {
-  const router = useRouter();
+export function NicknameScreen({ onBack, onSubmit, onNext }: NicknameScreenProps) {
   const [nickname, setNickname] = useState("");
   const [touched, setTouched] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -30,7 +32,7 @@ export function NicknameScreen({ onSubmit }: NicknameScreenProps) {
       await assertNicknameAvailable(nickname);
       await onSubmit(nickname);
     },
-    onSuccess: () => router.push("/login"),
+    onSuccess: onNext,
     onError: () => setShowToast(true),
   });
 
@@ -63,7 +65,13 @@ export function NicknameScreen({ onSubmit }: NicknameScreenProps) {
   return (
     <>
       <div className="flex w-full items-center justify-between py-2.5">
-        <button type="button" aria-label="Back" onClick={() => router.back()} className="text-gray-900">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={onBack}
+          disabled={signupMutation.isPending}
+          className="text-gray-900 disabled:opacity-40"
+        >
           <ArrowLeftIcon className="size-6" />
         </button>
         <p className="text-body-sb-16 text-black">Profile Setting</p>

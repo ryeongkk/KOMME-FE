@@ -1,10 +1,5 @@
 import { ApiError } from "./client";
 
-// Thrown by page.tsx onSubmit closures when a client-only precondition fails (e.g. the
-// signup/reset draft's sessionStorage entry is gone) — not a server ApiError, but still a
-// message meant to reach the screen instead of falling back to a generic one.
-export class SessionExpiredError extends Error {}
-
 // Notion "코메 API 명세서" > Auth 도메인 각 페이지의 "주요 실패" 코드 → 화면 문구.
 // 여러 화면(로그인/회원가입/비밀번호 재설정/탈퇴)이 같은 코드를 공유해서 한 곳에 모음.
 const MESSAGES: Record<string, string> = {
@@ -23,6 +18,5 @@ const MESSAGES: Record<string, string> = {
 
 export function authErrorMessage(error: unknown, fallback = "Something went wrong. Please try again."): string {
   if (error instanceof ApiError) return MESSAGES[error.code] ?? fallback;
-  if (error instanceof SessionExpiredError) return error.message;
   return fallback;
 }
