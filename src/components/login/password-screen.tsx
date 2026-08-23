@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeftIcon } from "@/components/icons";
 import { TextField } from "@/components/ui/text-field";
@@ -13,14 +12,15 @@ const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$/;
 type PasswordScreenProps = {
   headerTitle: string;
   heading: string;
-  /** Route to continue to once the password is confirmed. */
-  nextPath: string;
-  /** Signup stashes the password in the signup draft; reset calls resetPassword() — decided by the route's page.tsx. */
+  /** Previous step, or leave the wizard entirely — decided by the orchestrating page.tsx. */
+  onBack: () => void;
+  /** Signup stashes the password in the orchestrator's state; reset calls resetPassword() — decided by the route's page.tsx. */
   onSubmit: (password: string) => Promise<void>;
+  /** Advance to the next step once the password is confirmed. */
+  onNext: () => void;
 };
 
-export function PasswordScreen({ headerTitle, heading, nextPath, onSubmit }: PasswordScreenProps) {
-  const router = useRouter();
+export function PasswordScreen({ headerTitle, heading, onBack, onSubmit, onNext }: PasswordScreenProps) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [touchedPassword, setTouchedPassword] = useState(false);
@@ -35,7 +35,7 @@ export function PasswordScreen({ headerTitle, heading, nextPath, onSubmit }: Pas
 
   const submitMutation = useMutation({
     mutationFn: () => onSubmit(password),
-    onSuccess: () => router.push(nextPath),
+    onSuccess: onNext,
   });
 
   const handleNext = () => {
@@ -46,7 +46,7 @@ export function PasswordScreen({ headerTitle, heading, nextPath, onSubmit }: Pas
   return (
     <>
       <div className="flex w-full items-center justify-between py-2.5">
-        <button type="button" aria-label="Back" onClick={() => router.back()} className="text-gray-900">
+        <button type="button" aria-label="Back" onClick={onBack} className="text-gray-900">
           <ArrowLeftIcon className="size-6" />
         </button>
         <p className="text-body-sb-16 text-black">{headerTitle}</p>

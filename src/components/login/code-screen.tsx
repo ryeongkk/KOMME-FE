@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
 import { authErrorMessage } from "@/lib/api/auth-error-messages";
@@ -20,18 +19,19 @@ function formatTime(totalSeconds: number) {
 
 type CodeScreenProps = {
   headerTitle: string;
-  /** Email the code was sent to — the route's page.tsx reads this from its draft (signup or reset). */
+  /** Email the code was sent to — the orchestrating page.tsx holds this in its own state. */
   email: string;
-  /** Route to continue to once the code is verified. */
-  nextPath: string;
+  /** Previous step, or leave the wizard entirely — decided by the orchestrating page.tsx. */
+  onBack: () => void;
   /** Signup confirms an email-verification code, reset confirms a password-reset code — decided by the route's page.tsx. */
   onConfirm: (email: string, code: string) => Promise<void>;
   /** Re-sends the same kind of code this screen is confirming. */
   onResend: (email: string) => Promise<void>;
+  /** Advance to the next step once the code is confirmed. */
+  onNext: () => void;
 };
 
-export function CodeScreen({ headerTitle, email, nextPath, onConfirm, onResend }: CodeScreenProps) {
-  const router = useRouter();
+export function CodeScreen({ headerTitle, email, onBack, onConfirm, onResend, onNext }: CodeScreenProps) {
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [secondsLeft, setSecondsLeft] = useState(TIMER_SECONDS);
   const [showToast, setShowToast] = useState(false);
@@ -42,7 +42,7 @@ export function CodeScreen({ headerTitle, email, nextPath, onConfirm, onResend }
 
   const confirmMutation = useMutation({
     mutationFn: (code: string) => onConfirm(email, code),
-    onSuccess: () => router.push(nextPath),
+    onSuccess: onNext,
     onError: () => setShowToast(true),
   });
   const resendMutation = useMutation({
@@ -110,7 +110,7 @@ export function CodeScreen({ headerTitle, email, nextPath, onConfirm, onResend }
   return (
     <>
       <div className="flex w-full items-center justify-between py-2.5">
-        <button type="button" aria-label="Back" onClick={() => router.back()} className="text-gray-900">
+        <button type="button" aria-label="Back" onClick={onBack} className="text-gray-900">
           <ArrowLeftIcon className="size-6" />
         </button>
         <p className="text-body-sb-16 text-black">{headerTitle}</p>
