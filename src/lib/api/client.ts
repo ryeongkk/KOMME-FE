@@ -14,15 +14,18 @@ export class ApiError extends Error {
 
 /**
  * Calls a KOMME API endpoint and parses `data` against `dataSchema`. Only `data` is
- * validated at runtime — the backend isn't deployed yet (no live Swagger to check
- * against), so this is what catches the response silently drifting from the Notion spec.
+ * validated at runtime — this is what catches the real backend's response silently
+ * drifting from the swagger/Notion spec this client was written against.
  */
 export async function apiFetch<T>(path: string, dataSchema: ZodType<T>, init?: RequestInit): Promise<T> {
   // Normalize via Headers so a Headers instance or [key, value][] tuple array in
   // init.headers merges correctly — a plain object spread silently drops those.
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  const res = await fetch(path, { ...init, headers });
+  // NEXT_PUBLIC_API_BASE_URL points at the real backend (see .env.local). In dev, MSW
+  // only intercepts same-origin relative requests, so once this is set requests bypass
+  // MSW and hit the real backend directly — onUnhandledRequest: "bypass" lets them through.
+  const res = await fetch((process.env.NEXT_PUBLIC_API_BASE_URL ?? "") + path, { ...init, headers });
   const body = await res.json();
   if (!res.ok || !body.isSuccess) {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Request failed");
