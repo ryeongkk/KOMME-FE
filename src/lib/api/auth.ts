@@ -30,6 +30,26 @@ export function login(request: LoginRequest): Promise<LoginResponse> {
   });
 }
 
+// ---- Google 로그인 (POST /api/v1/auth/oauth/google) ----
+// Response shape matches email login (accessToken/refreshToken/profileCompleted), so it
+// reuses loginResponseSchema.
+export function loginWithGoogle(idToken: string): Promise<LoginResponse> {
+  return apiFetch("/api/v1/auth/oauth/google", loginResponseSchema, {
+    method: "POST",
+    body: JSON.stringify({ idToken, preferredLanguage: "ENGLISH" }),
+  });
+}
+
+// ---- 소셜 로그인 사용자 프로필 완성 (PATCH /api/v1/auth/oauth/profile, Bearer 필요) ----
+// Apple/Google 최초 로그인 시 profileCompleted가 false로 오면 닉네임을 채우는 데 씀.
+export function completeOAuthProfile(nickname: string): Promise<void> {
+  return apiFetch("/api/v1/auth/oauth/profile", z.void(), {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ nickname }),
+  });
+}
+
 // ---- 토큰 재발급 (POST /api/v1/auth/tokens/reissue) ----
 // ponytail: not wired to an automatic silent-refresh-and-retry yet — nothing in the app
 // holds a long-lived session or hits a protected route repeatedly. Hook this into
