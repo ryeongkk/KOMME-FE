@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarIcon, LocationIcon, PlusIcon } from "@/components/icons";
 import { type Schedule, ScheduleCard } from "@/components/ui/schedule-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tapbar } from "@/components/ui/tapbar";
 import { type CourseSummary, getCourses } from "@/lib/api/course";
 
@@ -146,10 +147,18 @@ function EmptyState() {
   );
 }
 
+// Card-shaped placeholder matching ScheduleCard/HistoryCard's footprint (both ~132px+,
+// bordered, badge/title/meta stacked at top) so the list doesn't jump when data lands.
 function LoadingState() {
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <p className="text-body-m-14 text-gray-400">Loading…</p>
+    <div className="flex w-full flex-col gap-3 px-4 py-5">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="flex h-[132px] w-full flex-col justify-center gap-2 rounded-[10px] border border-gray-200 p-4">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+      ))}
     </div>
   );
 }
