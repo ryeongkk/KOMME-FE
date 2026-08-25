@@ -2,10 +2,12 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import Script from "next/script";
+import { useEffect, useRef, useState } from "react";
 import { AppleIcon, CheckIcon, GlobeIcon, GoogleIcon } from "@/components/icons";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { login } from "@/lib/api/auth";
+import { NicknameScreen } from "@/components/login/nickname-screen";
+import { completeOAuthProfile, login, loginWithGoogle } from "@/lib/api/auth";
 import { saveAuthTokens } from "@/lib/auth-tokens";
 import { ApiError } from "@/lib/api/client";
 
@@ -15,10 +17,40 @@ const languages = [
   { label: "日本語", selected: false },
 ];
 
+// Google Identity Services isn't published with types — this is only the slice this file
+// calls. https://developers.google.com/identity/oauth2/web/guides/use-code-model
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        oauth2: {
+          initCodeClient(config: {
+            client_id: string;
+            scope: string;
+            ux_mode: "popup";
+            callback: (response: { code: string }) => void;
+            error_callback?: (error: { type: string }) => void;
+          }): { requestCode(): void };
+        };
+      };
+    };
+  }
+}
+
 export function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // "nickname" = Google login came back with profileCompleted: false (first-time social
+  // signup, no nickname yet) — reuses the signup wizard's NicknameScreen in place.
+  const [step, setStep] = useState<"login" | "nickname">("login");
+  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false);
+  // requestCode() doesn't resolve to googleMutation.isPending until the popup finishes —
+  // while it's open the button would otherwise stay clickable, letting a repeat click
+  // open a second popup. Locked right before requestCode(), released in the code
+  // callback and in error_callback (popup closed/blocked) so it can't get stuck.
+  const [googlePopupOpen, setGooglePopupOpen] = useState(false);
+  const googleClientRef = useRef<{ requestCode(): void } | null>(null);
 
   const loginMutation = useMutation({
     mutationFn: () => login({ email, password, preferredLanguage: "ENGLISH" }),
@@ -27,6 +59,42 @@ export function LoginScreen() {
       router.push("/");
     },
   });
+
+  const googleMutation = useMutation({
+    mutationFn: loginWithGoogle,
+    onSuccess: (data) => {
+      saveAuthTokens(data);
+      if (data.profileCompleted) router.push("/");
+      else setStep("nickname");
+    },
+  });
+
+  // initCodeClient(popup) over renderButton/prompt(): renderButton forces Google's own
+  // button chrome (hiding it behind a custom icon via opacity-0 overlay gets silently
+  // blocked by Google's anti-clickjacking check — tried it), and prompt()'s One Tap runs
+  // over FedCM, which aborts silently far too often to trust ("AbortError: signal is
+  // aborted without reason"). initCodeClient's popup is a real user-gesture-triggered
+  // OAuth popup — no FedCM involved, and it's just an API call rather than a rendered
+  // widget, so the visible button can be fully custom. Returns an authorization code
+  // (not an idToken) — backend exchanges it server-side, see lib/api/auth.ts.
+  useEffect(() => {
+    if (!googleScriptLoaded || !window.google) return;
+    googleClientRef.current = window.google.accounts.oauth2.initCodeClient({
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+      scope: "openid profile",
+      ux_mode: "popup",
+      callback: (response) => {
+        setGooglePopupOpen(false);
+        // No code = user closed the popup or denied consent — nothing to submit.
+        if (response.code) googleMutation.mutate(response.code);
+      },
+      // Non-OAuth failures (popup blocked/closed) never reach `callback` above, so the
+      // lock has to be released here too or the button stays disabled forever.
+      error_callback: () => setGooglePopupOpen(false),
+    });
+    // googleMutation.mutate is a stable react-query reference — safe to omit from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [googleScriptLoaded]);
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !loginMutation.isPending;
 
@@ -42,8 +110,23 @@ export function LoginScreen() {
       : "Something went wrong. Please try again."
     : null;
 
+  if (step === "nickname") {
+    return (
+      <NicknameScreen
+        onBack={() => setStep("login")}
+        onSubmit={completeOAuthProfile}
+        onNext={() => router.push("/")}
+      />
+    );
+  }
+
   return (
     <>
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"
+        onReady={() => setGoogleScriptLoaded(true)}
+      />
       <p className="mt-[150.5px] text-title-b-20 text-black">Logo</p>
 
       <form onSubmit={handleLogin} className="mt-[103.5px] flex w-full flex-col gap-4">
@@ -102,11 +185,26 @@ export function LoginScreen() {
         <button
           type="button"
           aria-label="Continue with Google"
-          className="flex size-[60px] items-center justify-center rounded-full border border-gray-400 bg-white"
+          onClick={() => {
+            if (!googleClientRef.current) return;
+            setGooglePopupOpen(true);
+            googleClientRef.current.requestCode();
+          }}
+          disabled={googlePopupOpen || googleMutation.isPending}
+          className="flex size-[60px] items-center justify-center rounded-full border border-gray-400 bg-white disabled:opacity-60"
         >
-          <GoogleIcon className="size-[22px]" />
+          {googlePopupOpen || googleMutation.isPending ? (
+            <span className="size-[22px] animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+          ) : (
+            <GoogleIcon className="size-[22px]" />
+          )}
         </button>
       </div>
+      {googleMutation.isError && (
+        <p role="alert" className="mt-2 text-caption-r-12 text-negative">
+          Google login failed. Please try again.
+        </p>
+      )}
 
       <button
         type="button"

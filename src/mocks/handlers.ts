@@ -194,6 +194,30 @@ export const handlers: HttpHandler[] = [
     return ok();
   }),
 
+  // Google 로그인 — code가 "new"를 포함하면 프로필 미완성(닉네임 없음)인 신규 가입 취급,
+  // 그 외엔 기존 MOCK_ACCOUNT로 로그인한 것처럼 처리. 실제 code→토큰 교환은 백엔드 담당이라
+  // 목업에선 값 자체를 신경 쓰지 않음.
+  http.post("/api/v1/auth/oauth/google", async ({ request }) => {
+    const body = (await request.json()) as { code?: string };
+    if (!body.code) return fail(400, "COM_400", "code가 누락되었습니다.");
+    return ok(
+      loginResponseSchema.parse({
+        accessToken: MOCK_ACCESS_TOKEN,
+        refreshToken: "mock-refresh-token",
+        profileCompleted: !body.code.includes("new"),
+      }),
+    );
+  }),
+
+  // 소셜 로그인 사용자 프로필 완성
+  http.patch("/api/v1/auth/oauth/profile", async ({ request }) => {
+    if (!isAuthorized(request)) return fail(401, "AUTH_401_2", "유효하지 않은 토큰입니다.");
+    const body = (await request.json()) as { nickname?: string };
+    if (body.nickname?.toLowerCase() === "admin") return fail(409, "AUTH_409_2", "이미 사용 중인 닉네임입니다.");
+    if (body.nickname) mockProfile = { ...mockProfile, nickname: body.nickname };
+    return ok();
+  }),
+
   // Notion "코메 API 명세서" > User 도메인.
   // 마이페이지 프로필 조회
   http.get("/api/v1/users/me", ({ request }) => {
