@@ -29,6 +29,7 @@ declare global {
             scope: string;
             ux_mode: "popup";
             callback: (response: { code: string }) => void;
+            error_callback?: (error: { type: string }) => void;
           }): { requestCode(): void };
         };
       };
@@ -44,6 +45,11 @@ export function LoginScreen() {
   // signup, no nickname yet) — reuses the signup wizard's NicknameScreen in place.
   const [step, setStep] = useState<"login" | "nickname">("login");
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false);
+  // requestCode() doesn't resolve to googleMutation.isPending until the popup finishes —
+  // while it's open the button would otherwise stay clickable, letting a repeat click
+  // open a second popup. Locked right before requestCode(), released in the code
+  // callback and in error_callback (popup closed/blocked) so it can't get stuck.
+  const [googlePopupOpen, setGooglePopupOpen] = useState(false);
   const googleClientRef = useRef<{ requestCode(): void } | null>(null);
 
   const loginMutation = useMutation({
@@ -78,9 +84,13 @@ export function LoginScreen() {
       scope: "openid profile",
       ux_mode: "popup",
       callback: (response) => {
+        setGooglePopupOpen(false);
         // No code = user closed the popup or denied consent — nothing to submit.
         if (response.code) googleMutation.mutate(response.code);
       },
+      // Non-OAuth failures (popup blocked/closed) never reach `callback` above, so the
+      // lock has to be released here too or the button stays disabled forever.
+      error_callback: () => setGooglePopupOpen(false),
     });
     // googleMutation.mutate is a stable react-query reference — safe to omit from deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -175,11 +185,15 @@ export function LoginScreen() {
         <button
           type="button"
           aria-label="Continue with Google"
-          onClick={() => googleClientRef.current?.requestCode()}
-          disabled={googleMutation.isPending}
+          onClick={() => {
+            if (!googleClientRef.current) return;
+            setGooglePopupOpen(true);
+            googleClientRef.current.requestCode();
+          }}
+          disabled={googlePopupOpen || googleMutation.isPending}
           className="flex size-[60px] items-center justify-center rounded-full border border-gray-400 bg-white disabled:opacity-60"
         >
-          {googleMutation.isPending ? (
+          {googlePopupOpen || googleMutation.isPending ? (
             <span className="size-[22px] animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
           ) : (
             <GoogleIcon className="size-[22px]" />

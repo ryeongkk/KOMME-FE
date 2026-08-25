@@ -25,7 +25,10 @@ export async function apiFetch<T>(path: string, dataSchema: ZodType<T>, init?: R
   // NEXT_PUBLIC_API_BASE_URL points at the real backend (see .env.local). In dev, MSW
   // only intercepts same-origin relative requests, so once this is set requests bypass
   // MSW and hit the real backend directly — onUnhandledRequest: "bypass" lets them through.
-  const res = await fetch((process.env.NEXT_PUBLIC_API_BASE_URL ?? "") + path, { ...init, headers });
+  // Strip a trailing slash so a base URL set with one doesn't produce "//api/..." — path
+  // always starts with "/".
+  const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/+$/, "");
+  const res = await fetch(baseUrl + path, { ...init, headers });
   const body = await res.json();
   if (!res.ok || !body.isSuccess) {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Request failed");
