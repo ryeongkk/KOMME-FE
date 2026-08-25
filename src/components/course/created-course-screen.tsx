@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
 import { ArrowLeftIcon, MapIcon, SaveLgIcon } from "@/components/icons";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { deleteCourse, getCourseDetail, saveCourse } from "@/lib/api/course";
 import { courseErrorMessage } from "@/lib/api/course-error-messages";
 import { CourseSpotCard } from "./course-spot-card";
@@ -155,8 +156,19 @@ export function CreatedCourseScreen() {
           </button>
         </div>
       ) : courseQuery.isLoading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-body-m-14 text-gray-400">Loading…</p>
+        // Same dot+dashed-line+CourseSpotCard shape as the real timeline below,
+        // just with left-[16px] to match this screen's own offset.
+        <div className="relative flex w-full flex-1 flex-col gap-3 py-5">
+          <div className="absolute top-5 bottom-5 left-[16px] border-l border-dashed border-gray-200" />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex w-full items-center gap-[27px] pl-[11px]">
+              <div className="relative z-10 size-2.5 shrink-0 rounded-full bg-gray-200" />
+              <div className="flex w-full items-center gap-3">
+                <Skeleton className="size-24 shrink-0 rounded-[4.8px]" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="relative flex w-full flex-1 flex-col gap-3 py-5">
