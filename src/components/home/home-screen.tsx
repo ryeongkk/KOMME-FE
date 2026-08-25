@@ -51,7 +51,9 @@ export function HomeScreen() {
             <p className="text-body-sb-16 text-black">
               {UPCOMING_SCHEDULE ? "You have an upcoming course" : "You have no upcoming courses"}
             </p>
-            <p className="text-caption-m-12 text-gray-400">More</p>
+            <Link href="/course" className="text-caption-m-12 text-gray-400">
+              More
+            </Link>
           </div>
           {UPCOMING_SCHEDULE ? <ScheduleCard schedule={UPCOMING_SCHEDULE} /> : <EmptyScheduleCard />}
         </div>
@@ -111,13 +113,12 @@ function EmptyScheduleCard() {
           {`Pick a topic below and we'll build a course around your location`}
         </p>
       </div>
-      {/* ponytail: no /course/create route yet, wire up onClick when it exists */}
-      <button
-        type="button"
+      <Link
+        href="/course/create"
         className="flex h-10 w-full items-center justify-center rounded-lg bg-secondary-100 text-body-m-14 text-secondary-300"
       >
         Start Creating
-      </button>
+      </Link>
     </div>
   );
 }
