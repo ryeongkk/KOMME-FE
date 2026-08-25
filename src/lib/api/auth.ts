@@ -32,11 +32,15 @@ export function login(request: LoginRequest): Promise<LoginResponse> {
 
 // ---- Google 로그인 (POST /api/v1/auth/oauth/google) ----
 // Response shape matches email login (accessToken/refreshToken/profileCompleted), so it
-// reuses loginResponseSchema.
-export function loginWithGoogle(idToken: string): Promise<LoginResponse> {
+// reuses loginResponseSchema. body는 idToken이 아니라 authorization code — FE가 커스텀
+// 버튼 + initCodeClient(popup) 방식으로 전환하면서 구글이 idToken 대신 1회용 code를 주는
+// 구조로 바뀜. 백엔드가 이 code를 구글 토큰 엔드포인트와 서버사이드로 교환해야 함(client
+// secret 필요, redirect_uri는 고정값 "postmessage"). 엔드포인트를 그대로 재사용하는 건
+// 잠정 계약이고 백엔드 확정 전까지 바뀔 수 있음 — login-screen.tsx 참고.
+export function loginWithGoogle(code: string): Promise<LoginResponse> {
   return apiFetch("/api/v1/auth/oauth/google", loginResponseSchema, {
     method: "POST",
-    body: JSON.stringify({ idToken, preferredLanguage: "ENGLISH" }),
+    body: JSON.stringify({ code, preferredLanguage: "ENGLISH" }),
   });
 }
 

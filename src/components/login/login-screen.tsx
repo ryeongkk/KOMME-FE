@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
-import { AppleIcon, CheckIcon, GlobeIcon } from "@/components/icons";
+import { AppleIcon, CheckIcon, GlobeIcon, GoogleIcon } from "@/components/icons";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { NicknameScreen } from "@/components/login/nickname-screen";
 import { completeOAuthProfile, login, loginWithGoogle } from "@/lib/api/auth";
@@ -18,17 +18,18 @@ const languages = [
 ];
 
 // Google Identity Services isn't published with types — this is only the slice this file
-// calls. https://developers.google.com/identity/gsi/web/reference/js-reference
+// calls. https://developers.google.com/identity/oauth2/web/guides/use-code-model
 declare global {
   interface Window {
     google?: {
       accounts: {
-        id: {
-          initialize(config: { client_id: string; callback: (response: { credential: string }) => void }): void;
-          renderButton(
-            parent: HTMLElement,
-            options: { type: "icon"; shape: "circle"; size: "large" },
-          ): void;
+        oauth2: {
+          initCodeClient(config: {
+            client_id: string;
+            scope: string;
+            ux_mode: "popup";
+            callback: (response: { code: string }) => void;
+          }): { requestCode(): void };
         };
       };
     };
@@ -43,7 +44,7 @@ export function LoginScreen() {
   // signup, no nickname yet) — reuses the signup wizard's NicknameScreen in place.
   const [step, setStep] = useState<"login" | "nickname">("login");
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false);
-  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleClientRef = useRef<{ requestCode(): void } | null>(null);
 
   const loginMutation = useMutation({
     mutationFn: () => login({ email, password, preferredLanguage: "ENGLISH" }),
@@ -62,20 +63,24 @@ export function LoginScreen() {
     },
   });
 
-  // renderButton over prompt(): prompt() drives Google's FedCM-based One Tap, which in
-  // practice aborts silently (or with a console "AbortError: signal is aborted without
-  // reason") far too often to trust. renderButton draws Google's own clickable button,
-  // which uses a plain popup instead of FedCM.
+  // initCodeClient(popup) over renderButton/prompt(): renderButton forces Google's own
+  // button chrome (hiding it behind a custom icon via opacity-0 overlay gets silently
+  // blocked by Google's anti-clickjacking check — tried it), and prompt()'s One Tap runs
+  // over FedCM, which aborts silently far too often to trust ("AbortError: signal is
+  // aborted without reason"). initCodeClient's popup is a real user-gesture-triggered
+  // OAuth popup — no FedCM involved, and it's just an API call rather than a rendered
+  // widget, so the visible button can be fully custom. Returns an authorization code
+  // (not an idToken) — backend exchanges it server-side, see lib/api/auth.ts.
   useEffect(() => {
-    if (!googleScriptLoaded || !window.google || !googleButtonRef.current) return;
-    window.google.accounts.id.initialize({
+    if (!googleScriptLoaded || !window.google) return;
+    googleClientRef.current = window.google.accounts.oauth2.initCodeClient({
       client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-      callback: (response) => googleMutation.mutate(response.credential),
-    });
-    window.google.accounts.id.renderButton(googleButtonRef.current, {
-      type: "icon",
-      shape: "circle",
-      size: "large",
+      scope: "openid profile",
+      ux_mode: "popup",
+      callback: (response) => {
+        // No code = user closed the popup or denied consent — nothing to submit.
+        if (response.code) googleMutation.mutate(response.code);
+      },
     });
     // googleMutation.mutate is a stable react-query reference — safe to omit from deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -167,12 +172,19 @@ export function LoginScreen() {
         >
           <AppleIcon className="h-[25px] w-[20px]" />
         </button>
-        {/* Google renders its own real button (iframe) into this node via renderButton —
-            "large" icon buttons come out ~40px with no pixel-size option, short of the
-            60px Apple circle next to it, so scale it up to match instead. */}
-        <div className="flex size-[60px] items-center justify-center">
-          <div ref={googleButtonRef} aria-label="Continue with Google" className="scale-150" />
-        </div>
+        <button
+          type="button"
+          aria-label="Continue with Google"
+          onClick={() => googleClientRef.current?.requestCode()}
+          disabled={googleMutation.isPending}
+          className="flex size-[60px] items-center justify-center rounded-full border border-gray-400 bg-white disabled:opacity-60"
+        >
+          {googleMutation.isPending ? (
+            <span className="size-[22px] animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+          ) : (
+            <GoogleIcon className="size-[22px]" />
+          )}
+        </button>
       </div>
       {googleMutation.isError && (
         <p role="alert" className="mt-2 text-caption-r-12 text-negative">

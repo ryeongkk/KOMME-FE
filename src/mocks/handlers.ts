@@ -194,17 +194,17 @@ export const handlers: HttpHandler[] = [
     return ok();
   }),
 
-  // Google 로그인 — idToken이 "new"를 포함하면 프로필 미완성(닉네임 없음)인 신규 가입 취급,
-  // 그 외엔 기존 MOCK_ACCOUNT로 로그인한 것처럼 처리. 실제 idToken 검증은 백엔드 담당이라
+  // Google 로그인 — code가 "new"를 포함하면 프로필 미완성(닉네임 없음)인 신규 가입 취급,
+  // 그 외엔 기존 MOCK_ACCOUNT로 로그인한 것처럼 처리. 실제 code→토큰 교환은 백엔드 담당이라
   // 목업에선 값 자체를 신경 쓰지 않음.
   http.post("/api/v1/auth/oauth/google", async ({ request }) => {
-    const body = (await request.json()) as { idToken?: string };
-    if (!body.idToken) return fail(400, "COM_400", "idToken이 누락되었습니다.");
+    const body = (await request.json()) as { code?: string };
+    if (!body.code) return fail(400, "COM_400", "code가 누락되었습니다.");
     return ok(
       loginResponseSchema.parse({
         accessToken: MOCK_ACCESS_TOKEN,
         refreshToken: "mock-refresh-token",
-        profileCompleted: !body.idToken.includes("new"),
+        profileCompleted: !body.code.includes("new"),
       }),
     );
   }),
