@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowRightIcon, MypageIcon } from "@/components/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tapbar } from "@/components/ui/tapbar";
 import { getMyProfile } from "@/lib/api/user";
 
@@ -30,7 +31,7 @@ export function MyScreen() {
           {profileQuery.data ? (
             <span className="flex-1 text-left text-body-sb-16 text-black">{profileQuery.data.nickname}</span>
           ) : (
-            <span className="h-5 flex-1 animate-pulse rounded bg-gray-100" aria-hidden />
+            <Skeleton className="h-5 flex-1" />
           )}
           <ArrowRightIcon className="size-6 shrink-0 text-gray-900" />
         </button>
