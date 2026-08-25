@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, DeleteIcon, MapIcon } from "@/components/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { deleteCourse, getCourseDetail } from "@/lib/api/course";
 import { courseErrorMessage } from "@/lib/api/course-error-messages";
 import { CourseSpotCard } from "./course-spot-card";
@@ -61,9 +62,15 @@ export function CourseDetailScreen({ courseId }: { courseId: string }) {
             symmetric regardless of which side is wider. DOM order kept between the two
             buttons (not moved to a natural absolute-item spot) for reading/tab order — its
             own position: absolute already excludes it from the flex layout either way. */}
-        <p className="absolute inset-x-0 truncate px-[76px] text-center text-body-sb-16 text-black">
-          {courseQuery.data?.title ?? "Course name"}
-        </p>
+        {courseQuery.isLoading ? (
+          <span className="absolute inset-x-0 flex justify-center px-[76px]">
+            <Skeleton className="h-5 w-32" />
+          </span>
+        ) : (
+          <p className="absolute inset-x-0 truncate px-[76px] text-center text-body-sb-16 text-black">
+            {courseQuery.data?.title ?? "Course name"}
+          </p>
+        )}
         <div className="flex shrink-0 items-center gap-2.5">
           {/* ponytail: reuses the same static-stub map screen created-course-screen.tsx
               links to (course-route-map.tsx) — not courseId-aware, always shows
@@ -92,9 +99,19 @@ export function CourseDetailScreen({ courseId }: { courseId: string }) {
         </div>
       ) : courseQuery.isLoading ? (
         // Same reasoning: an in-flight fetch has no spots yet either, and shouldn't
-        // render as if the course really is empty.
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-body-m-14 text-gray-400">Loading…</p>
+        // render as if the course really is empty. Mirrors the real timeline's
+        // dot+dashed-line+CourseSpotCard shape so nothing jumps once data lands.
+        <div className="relative flex w-full flex-col gap-3 px-4 py-5">
+          <div className="absolute top-5 bottom-5 left-[32px] border-l border-dashed border-gray-200" />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex w-full items-center gap-[27px] pl-[11px]">
+              <div className="relative z-10 size-2.5 shrink-0 rounded-full bg-gray-200" />
+              <div className="flex w-full items-center gap-3">
+                <Skeleton className="size-24 shrink-0 rounded-[4.8px]" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="relative flex w-full flex-col gap-3 px-4 py-5">
